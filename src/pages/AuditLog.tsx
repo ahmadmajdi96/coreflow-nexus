@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Eye, Filter, X, ArrowRight, Download, FileText } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exporters";
+import { DataTable } from "@/components/DataTable";
 
 const ENTITY_TYPES = ["all", "product", "purchase_order", "inventory_batch", "markdown_event", "approval_rule"];
 const ACTIONS = ["all", "CREATE", "UPDATE", "DELETE", "APPROVE", "REJECT", "RECEIVE"];

@@ -215,9 +215,6 @@ const CFO = () => {
         </ResponsiveContainer>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card className="p-6">
-          <h3 className="font-semibold mb-1">7-Day Markdown Trend</h3>
           <p className="text-sm text-muted-foreground mb-4">Daily exposure over the past week.</p>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={trend}>

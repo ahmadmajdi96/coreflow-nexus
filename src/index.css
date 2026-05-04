@@ -2,92 +2,115 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CoreERP Design System - Modern Enterprise
-   Inspired by Linear / Notion / SAP Fiori
-   All colors HSL */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* CoreERP Design System — Clean Corporate (light, blue/teal accents)
+   Inspired by Shelf Insight Pro. All colors HSL. */
 
 @layer base {
   :root {
-    --background: 220 20% 98%;
-    --foreground: 222 32% 12%;
+    --background: 220 20% 97%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 32% 12%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 32% 12%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 222 60% 22%;
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 222 70% 38%;
+    --primary: 215 90% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 32% 18%;
+    --secondary: 220 16% 93%;
+    --secondary-foreground: 220 20% 30%;
 
-    --muted: 220 14% 95%;
-    --muted-foreground: 220 9% 45%;
+    --muted: 220 16% 94%;
+    --muted-foreground: 220 12% 45%;
 
-    --accent: 199 89% 48%;
+    --accent: 175 55% 42%;
     --accent-foreground: 0 0% 100%;
-
-    --success: 142 71% 38%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 222 60% 22%;
+    --success: 152 55% 40%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 12%;
 
-    --sidebar-background: 222 38% 14%;
-    --sidebar-foreground: 220 14% 90%;
-    --sidebar-muted: 220 14% 65%;
-    --sidebar-primary: 199 89% 48%;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 215 90% 50%;
+
+    --radius: 0.625rem;
+
+    --gradient-primary: linear-gradient(135deg, hsl(215 90% 50%) 0%, hsl(175 55% 42%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(152 55% 40%) 0%, hsl(152 55% 30%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(220 20% 94%) 50%, hsl(215 90% 96% / 0.5) 100%);
+
+    --shadow-glow: 0 0 30px hsl(215 90% 50% / 0.1);
+    --shadow-card: 0 1px 3px hsl(220 20% 50% / 0.08), 0 1px 2px hsl(220 20% 50% / 0.06);
+    --shadow-elevated: 0 4px 16px hsl(220 20% 50% / 0.1);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-muted: 220 12% 50%;
+    --sidebar-primary: 215 90% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 38% 20%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 30% 22%;
-
-    --gradient-header: linear-gradient(135deg, hsl(222 60% 22%), hsl(222 70% 32%));
-    --shadow-card: 0 1px 3px 0 hsl(222 32% 12% / 0.06), 0 1px 2px -1px hsl(222 32% 12% / 0.06);
-    --shadow-elevated: 0 4px 16px -4px hsl(222 32% 12% / 0.12);
-  }
-
-  .dark {
-    --background: 222 32% 8%;
-    --foreground: 220 14% 95%;
-    --card: 222 32% 11%;
-    --card-foreground: 220 14% 95%;
-    --popover: 222 32% 11%;
-    --popover-foreground: 220 14% 95%;
-    --primary: 199 89% 55%;
-    --primary-foreground: 222 32% 8%;
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 220 14% 95%;
-    --muted: 222 30% 16%;
-    --muted-foreground: 220 14% 65%;
-    --accent: 199 89% 55%;
-    --accent-foreground: 222 32% 8%;
-    --border: 222 30% 20%;
-    --input: 222 30% 20%;
-    --ring: 199 89% 55%;
+    --sidebar-accent: 220 16% 95%;
+    --sidebar-accent-foreground: 215 90% 50%;
+    --sidebar-border: 220 16% 90%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground antialiased; font-feature-settings: "cv02","cv03","cv04","cv11"; }
-  h1,h2,h3,h4 { @apply tracking-tight; }
+  body { @apply bg-background text-foreground antialiased; font-family: 'Inter', system-ui, sans-serif; }
+  h1,h2,h3,h4,h5,h6 { @apply font-semibold tracking-tight; }
+  code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
 }
 
 @layer components {
-  .erp-card { @apply bg-card border border-border rounded-lg shadow-sm; }
-  .stat-label { @apply text-xs font-medium text-muted-foreground uppercase tracking-wide; }
-  .stat-value { @apply text-2xl font-semibold text-foreground tabular-nums; }
+  .stat-card {
+    @apply relative overflow-hidden rounded-xl bg-card border border-border p-5 transition-all duration-300;
+    box-shadow: var(--shadow-card);
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--gradient-primary); opacity: 0; transition: opacity 0.3s;
+  }
+  .stat-card:hover::before { opacity: 1; }
+  .stat-card:hover { border-color: hsl(var(--primary) / 0.25); box-shadow: var(--shadow-glow); }
+
+  .stat-label { @apply text-xs font-medium text-muted-foreground uppercase tracking-wider; }
+  .stat-value-gradient {
+    @apply text-3xl font-bold;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .page-section { @apply rounded-xl bg-card border border-border; box-shadow: var(--shadow-card); }
+
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-secondary hover:text-foreground;
+  }
+  .nav-link-active { @apply bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary; }
+
+  .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+  @keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.5); }
+    50% { box-shadow: 0 0 0 6px hsl(var(--success) / 0); }
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.3); }
 }

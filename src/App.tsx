@@ -8,6 +8,7 @@ import AppLayout from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
+import Suppliers from "./pages/Suppliers";
 import Batches from "./pages/Batches";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import Markdowns from "./pages/Markdowns";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<Wrap><Dashboard /></Wrap>} />
             <Route path="/products" element={<Wrap><RoleGuard allowed={["inventory_manager"]}><Products /></RoleGuard></Wrap>} />
+            <Route path="/suppliers" element={<Wrap><RoleGuard allowed={["purchasing_manager","system_admin"]}><Suppliers /></RoleGuard></Wrap>} />
             <Route path="/batches" element={<Wrap><RoleGuard allowed={["inventory_manager","compliance_officer"]} readOnlyFor={["compliance_officer"]}><Batches /></RoleGuard></Wrap>} />
             <Route path="/purchase-orders" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><PurchaseOrders /></RoleGuard></Wrap>} />
             <Route path="/markdowns" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo"]}><Markdowns /></RoleGuard></Wrap>} />

@@ -309,32 +309,54 @@ const POs = () => {
               <Package className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">No approved POs awaiting goods receipt.</p>
             </Card>
-          ) : pendingReceipts.map(po => (
-            <Card key={po.id} className="page-section p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-sm font-semibold">{po.po_number}</span>
-                    <ReceiptStatusBadge status={po.receipt_status} />
+          ) : pendingReceipts.map(po => {
+            const isCapturer = hasRole("inventory_manager") || hasRole("purchasing_manager") || hasRole("system_admin");
+            const captureBlocked = !isCapturer
+              ? "Only Inventory or Purchasing managers can capture receipts."
+              : null;
+
+            const canPostNow = canPost(po);
+            const postBlocked = po.receipt_submitted_by === user?.id && !hasRole("system_admin")
+              ? "Segregation of duties: a different approver must post this receipt."
+              : !canPostNow
+                ? "Requires CFO, Purchasing Manager, or System Admin role to post."
+                : null;
+
+            const actions =
+              po.receipt_status === "DRAFT"
+                ? [{
+                    label: "Capture & Submit", icon: Send, next: "SUBMITTED" as const,
+                    onClick: () => setReceiving(po), blockedReason: captureBlocked,
+                  }]
+                : po.receipt_status === "SUBMITTED"
+                ? [{
+                    label: "Post to Inventory", icon: FileCheck, next: "POSTED" as const,
+                    onClick: () => postReceipt(po), blockedReason: postBlocked, variant: "success" as const,
+                  }]
+                : [];
+
+            return (
+              <Card key={po.id} className="page-section p-5 hover-lift">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono text-sm font-semibold">{po.po_number}</span>
+                      <Badge variant="outline">{po.department || "—"}</Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {po.suppliers?.name} · {po.purchase_order_lines.length} lines · ${Number(po.total_amount).toFixed(2)}
+                    </div>
+                    {po.receipt_status === "SUBMITTED" && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Submitted {po.receipt_submitted_at ? format(new Date(po.receipt_submitted_at), "PPp") : ""} — awaiting independent posting.
+                      </p>
+                    )}
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {po.suppliers?.name} · {po.purchase_order_lines.length} lines · ${Number(po.total_amount).toFixed(2)}
-                  </div>
-                  {po.receipt_status === "SUBMITTED" && (
-                    <p className="text-xs text-muted-foreground mt-2">Submitted {po.receipt_submitted_at ? format(new Date(po.receipt_submitted_at), "PPp") : ""} — awaiting posting (segregation of duties).</p>
-                  )}
                 </div>
-                <div className="flex gap-2">
-                  {po.receipt_status === "DRAFT" && <Button size="sm" onClick={() => setReceiving(po)}><Edit3 className="h-4 w-4 mr-1.5" />Capture</Button>}
-                  {po.receipt_status === "SUBMITTED" && (
-                    <Button size="sm" onClick={() => postReceipt(po)} disabled={!canPost(po)} className="bg-success hover:bg-success/90 text-success-foreground" title={!canPost(po) ? "A different approver must post" : ""}>
-                      <FileCheck className="h-4 w-4 mr-1.5" />Post to Inventory
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
+                <ReceiptStatusActions current={po.receipt_status as any} actions={actions} />
+              </Card>
+            );
+          })}
         </TabsContent>
 
         {/* ALL */}

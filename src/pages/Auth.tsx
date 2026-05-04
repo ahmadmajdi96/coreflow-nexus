@@ -95,23 +95,41 @@ const Auth = () => {
           </Tabs>
 
           <div className="mt-6 pt-5 border-t">
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Mock seeded roles · click to fill</div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Demo accounts · click to sign in</div>
             <div className="grid grid-cols-2 gap-1.5">
               {[
-                { label: "Admin", email: "admin@coreerp.demo" },
-                { label: "Inventory", email: "inventory@coreerp.demo" },
-                { label: "Purchasing", email: "purchasing@coreerp.demo" },
-                { label: "CFO", email: "cfo@coreerp.demo" },
-                { label: "Compliance", email: "compliance@coreerp.demo" },
+                { label: "Admin", email: "admin@coreerp.demo", name: "System Admin" },
+                { label: "Inventory", email: "inventory@coreerp.demo", name: "Inventory Manager" },
+                { label: "Purchasing", email: "purchasing@coreerp.demo", name: "Purchasing Manager" },
+                { label: "CFO", email: "cfo@coreerp.demo", name: "Chief Financial Officer" },
+                { label: "Compliance", email: "compliance@coreerp.demo", name: "Compliance Officer" },
               ].map(r => (
-                <button key={r.email} type="button" onClick={() => { setEmail(r.email); setPassword("demo1234"); }}
-                  className="text-[11px] px-2 py-1.5 rounded-md border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors text-left">
+                <button key={r.email} type="button" disabled={busy} onClick={async () => {
+                  setEmail(r.email); setPassword("demo1234"); setBusy(true);
+                  // Try sign in first; if it fails, auto-create then sign in.
+                  let { error } = await supabase.auth.signInWithPassword({ email: r.email, password: "demo1234" });
+                  if (error) {
+                    const { error: signUpErr } = await supabase.auth.signUp({
+                      email: r.email, password: "demo1234",
+                      options: { emailRedirectTo: `${window.location.origin}/`, data: { full_name: r.name } },
+                    });
+                    if (signUpErr && !signUpErr.message.toLowerCase().includes("registered")) {
+                      setBusy(false); return toast.error(signUpErr.message);
+                    }
+                    ({ error } = await supabase.auth.signInWithPassword({ email: r.email, password: "demo1234" }));
+                  }
+                  setBusy(false);
+                  if (error) return toast.error(error.message);
+                  toast.success(`Signed in as ${r.label}`);
+                  nav("/");
+                }}
+                  className="text-[11px] px-2 py-1.5 rounded-md border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors text-left disabled:opacity-50">
                   <span className="font-semibold">{r.label}</span>
                   <span className="text-muted-foreground block truncate text-[10px]">{r.email}</span>
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">Password: <code className="font-mono">demo1234</code> · Sign up to create them.</p>
+            <p className="text-[10px] text-muted-foreground mt-2">Password: <code className="font-mono">demo1234</code> · Account is auto-created on first click.</p>
           </div>
         </Card>
       </div>

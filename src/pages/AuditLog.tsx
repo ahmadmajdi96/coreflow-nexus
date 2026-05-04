@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Eye, Filter, X, ArrowRight } from "lucide-react";
+import { Eye, Filter, X, ArrowRight, Download, FileText } from "lucide-react";
+import { exportToCSV, exportToPDF } from "@/lib/exporters";
 
-const ENTITY_TYPES = ["all", "product", "purchase_order", "inventory_batch", "markdown_event"];
+const ENTITY_TYPES = ["all", "product", "purchase_order", "inventory_batch", "markdown_event", "approval_rule"];
 const ACTIONS = ["all", "CREATE", "UPDATE", "DELETE", "APPROVE", "REJECT", "RECEIVE"];
 
 const ACTION_COLORS: Record<string, string> = {
@@ -55,9 +56,57 @@ const AuditLog = () => {
   const clearFilters = () => { setEntity("all"); setAction("all"); setFrom(""); setTo(""); setSearch(""); };
   const activeFilterCount = [entity !== "all", action !== "all", from, to, search].filter(Boolean).length;
 
+  const summarize = (r: any) => r.new_value
+    ? Object.entries(r.new_value).slice(0, 3).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join("; ")
+    : (r.old_value ? "Deleted record" : "—");
+
+  const exportCsv = () => {
+    const rows = filtered.map(r => [
+      format(new Date(r.created_at), "yyyy-MM-dd HH:mm:ss"),
+      r.entity_type, r.action, r.entity_id || "",
+      JSON.stringify(r.old_value || {}), JSON.stringify(r.new_value || {}),
+      r.user_id || "",
+    ]);
+    exportToCSV(`audit-log-${Date.now()}.csv`,
+      ["Timestamp","Entity","Action","Entity ID","Before","After","User"], rows);
+  };
+
+  const exportPdf = () => {
+    const rows = filtered.map(r => [
+      format(new Date(r.created_at), "MMM d, HH:mm"),
+      r.entity_type, r.action,
+      r.entity_id ? r.entity_id.slice(0, 8) : "—",
+      summarize(r).slice(0, 80),
+    ]);
+    const filterDesc = [
+      entity !== "all" && `entity=${entity}`,
+      action !== "all" && `action=${action}`,
+      from && `from=${from}`,
+      to && `to=${to}`,
+      search && `search="${search}"`,
+    ].filter(Boolean).join(", ") || "none";
+    exportToPDF({
+      title: "Audit Log Export",
+      subtitle: "Filtered immutable history of system changes.",
+      filename: `audit-log-${Date.now()}.pdf`,
+      headers: ["Time","Entity","Action","ID","Summary"],
+      rows,
+      meta: { "Records": String(filtered.length), "Active filters": filterDesc },
+    });
+  };
+
   return (
     <>
-      <PageHeader title="Audit Log" description="Immutable history of all critical data changes across the system." />
+      <PageHeader
+        title="Audit Log"
+        description="Immutable history of all critical data changes across the system."
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={exportCsv} disabled={filtered.length === 0}><Download className="h-4 w-4 mr-2" />CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportPdf} disabled={filtered.length === 0}><FileText className="h-4 w-4 mr-2" />PDF</Button>
+          </>
+        }
+      />
 
       <Card className="page-section p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">

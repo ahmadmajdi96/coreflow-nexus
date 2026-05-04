@@ -5,9 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, LineChart, Line } from "recharts";
-import { TrendingDown, DollarSign, Percent, Activity, Boxes, AlertTriangle, ArrowRight } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, LineChart, Line, AreaChart, Area } from "recharts";
+import { TrendingDown, DollarSign, Percent, Activity, AlertTriangle, ArrowRight, Warehouse, TrendingUp, PackageCheck } from "lucide-react";
+import { format, subDays, differenceInDays } from "date-fns";
 import { Link } from "react-router-dom";
 
 const CFO = () => {

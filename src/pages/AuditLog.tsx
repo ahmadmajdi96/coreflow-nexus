@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Eye, Filter, X, ArrowRight } from "lucide-react";
+import { Eye, Filter, X, ArrowRight, Download, FileText } from "lucide-react";
+import { exportToCSV, exportToPDF } from "@/lib/exporters";
 
-const ENTITY_TYPES = ["all", "product", "purchase_order", "inventory_batch", "markdown_event"];
+const ENTITY_TYPES = ["all", "product", "purchase_order", "inventory_batch", "markdown_event", "approval_rule"];
 const ACTIONS = ["all", "CREATE", "UPDATE", "DELETE", "APPROVE", "REJECT", "RECEIVE"];
 
 const ACTION_COLORS: Record<string, string> = {

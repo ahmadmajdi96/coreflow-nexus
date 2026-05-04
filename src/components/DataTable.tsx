@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card } from "@/components/ui/card";
-import { Search, Filter, X, Download, ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, X, Download, ArrowUpDown, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { exportToCSV } from "@/lib/exporters";
 import { format } from "date-fns";
 
@@ -39,6 +39,8 @@ interface Props<T> {
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
   rowClassName?: (row: T) => string;
+  /** initial page size (default 25). Set to 0 to disable pagination. */
+  pageSize?: number;
 }
 
 type SortDir = "asc" | "desc" | null;
@@ -47,7 +49,7 @@ const alignClass = (a?: "left" | "right" | "center") =>
   a === "right" ? "text-right" : a === "center" ? "text-center" : "text-left";
 
 export function DataTable<T>({
-  rows, columns, createdAtKey, exportFilename, rightToolbar, emptyMessage = "No records.", rowKey, onRowClick, rowClassName,
+  rows, columns, createdAtKey, exportFilename, rightToolbar, emptyMessage = "No records.", rowKey, onRowClick, rowClassName, pageSize: initialPageSize = 25,
 }: Props<T>) {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -55,6 +57,8 @@ export function DataTable<T>({
   const [dateTo, setDateTo] = useState<Record<string, string>>({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [pageSize, setPageSize] = useState<number>(initialPageSize);
+  const [page, setPage] = useState(1);
 
   const getCreated = (r: T): Date | null => {
     if (!createdAtKey) return null;
@@ -150,6 +154,17 @@ export function DataTable<T>({
     return out;
   }, [rows, allColumns, search, filters, dateFrom, dateTo, sortKey, sortDir]);
 
+  // Reset to first page whenever filters/search/sort/pageSize change
+  useEffect(() => { setPage(1); }, [search, filters, dateFrom, dateTo, sortKey, sortDir, pageSize, rows.length]);
+
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1;
+  const currentPage = Math.min(page, totalPages);
+  const paged = useMemo(() => {
+    if (pageSize <= 0) return filtered;
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
+
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
     if (sortDir === "asc") setSortDir("desc");
@@ -240,45 +255,68 @@ export function DataTable<T>({
         </div>
       </Card>
 
-      <Card className="page-section">
-        <div className="max-h-[calc(100vh-280px)] min-h-[300px] overflow-auto rounded-md">
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
-            <TableRow>
-              {allColumns.map(c => (
-                <TableHead key={c.key} className={`${alignClass(c.align)} bg-card ${c.className ?? ""}`}>
-                  {c.sortable ? (
-                    <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-                      {c.header}
-                      {sortKey === c.key
-                        ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)
-                        : <ArrowUpDown className="h-3 w-3 opacity-40" />}
-                    </button>
-                  ) : c.header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={allColumns.length} className="text-center text-muted-foreground py-12">{emptyMessage}</TableCell></TableRow>
-            )}
-            {filtered.map(r => (
-              <TableRow
-                key={rowKey(r)}
-                className={`table-row-hover ${onRowClick ? "cursor-pointer" : ""} ${rowClassName ? rowClassName(r) : ""}`}
-                onClick={onRowClick ? () => onRowClick(r) : undefined}
-              >
+      <Card className="page-section overflow-hidden">
+        <div className="max-h-[calc(100vh-320px)] min-h-[300px] overflow-auto rounded-md">
+          <Table className="w-full min-w-max table-auto">
+            <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
+              <TableRow>
                 {allColumns.map(c => (
-                  <TableCell key={c.key} className={`${alignClass(c.align)} ${c.className ?? ""}`}>
-                    {c.cell ? c.cell(r) : (c.accessor(r) ?? <span className="text-muted-foreground">—</span>)}
-                  </TableCell>
+                  <TableHead key={c.key} className={`${alignClass(c.align)} bg-card whitespace-nowrap ${c.className ?? ""}`}>
+                    {c.sortable ? (
+                      <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                        {c.header}
+                        {sortKey === c.key
+                          ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)
+                          : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                      </button>
+                    ) : c.header}
+                  </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={allColumns.length} className="text-center text-muted-foreground py-12">{emptyMessage}</TableCell></TableRow>
+              )}
+              {paged.map(r => (
+                <TableRow
+                  key={rowKey(r)}
+                  className={`table-row-hover ${onRowClick ? "cursor-pointer" : ""} ${rowClassName ? rowClassName(r) : ""}`}
+                  onClick={onRowClick ? () => onRowClick(r) : undefined}
+                >
+                  {allColumns.map(c => (
+                    <TableCell key={c.key} className={`${alignClass(c.align)} ${c.className ?? ""}`}>
+                      {c.cell ? c.cell(r) : (c.accessor(r) ?? <span className="text-muted-foreground">—</span>)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
+        {pageSize > 0 && filtered.length > 0 && (
+          <div className="flex items-center justify-between gap-3 border-t px-3 py-2 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Rows per page</span>
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                <SelectTrigger className="h-8 w-[80px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[10, 25, 50, 100, 200].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <span className="ml-2 tabular-nums">
+                {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filtered.length)} of {filtered.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
+              <span className="px-2 text-xs tabular-nums">Page {currentPage} of {totalPages}</span>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

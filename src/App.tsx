@@ -16,6 +16,7 @@ import Compliance from "./pages/Compliance";
 import AuditLog from "./pages/AuditLog";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
+import RoleGuard from "@/components/RoleGuard";
 
 const queryClient = new QueryClient();
 
@@ -31,14 +32,14 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<Wrap><Dashboard /></Wrap>} />
-            <Route path="/products" element={<Wrap><Products /></Wrap>} />
-            <Route path="/batches" element={<Wrap><Batches /></Wrap>} />
-            <Route path="/purchase-orders" element={<Wrap><PurchaseOrders /></Wrap>} />
-            <Route path="/markdowns" element={<Wrap><Markdowns /></Wrap>} />
-            <Route path="/cfo" element={<Wrap><CFODashboard /></Wrap>} />
-            <Route path="/compliance" element={<Wrap><Compliance /></Wrap>} />
-            <Route path="/audit" element={<Wrap><AuditLog /></Wrap>} />
-            <Route path="/users" element={<Wrap><Users /></Wrap>} />
+            <Route path="/products" element={<Wrap><RoleGuard allowed={["inventory_manager"]}><Products /></RoleGuard></Wrap>} />
+            <Route path="/batches" element={<Wrap><RoleGuard allowed={["inventory_manager","compliance_officer"]} readOnlyFor={["compliance_officer"]}><Batches /></RoleGuard></Wrap>} />
+            <Route path="/purchase-orders" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><PurchaseOrders /></RoleGuard></Wrap>} />
+            <Route path="/markdowns" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo"]}><Markdowns /></RoleGuard></Wrap>} />
+            <Route path="/cfo" element={<Wrap><RoleGuard allowed={["cfo"]}><CFODashboard /></RoleGuard></Wrap>} />
+            <Route path="/compliance" element={<Wrap><RoleGuard allowed={["compliance_officer","cfo","inventory_manager"]} readOnlyFor={["compliance_officer"]}><Compliance /></RoleGuard></Wrap>} />
+            <Route path="/audit" element={<Wrap><RoleGuard allowed={["compliance_officer","cfo"]} readOnlyFor={["compliance_officer"]}><AuditLog /></RoleGuard></Wrap>} />
+            <Route path="/users" element={<Wrap><RoleGuard allowed={[]}><Users /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -93,6 +93,26 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+
+          <div className="mt-6 pt-5 border-t">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Mock seeded roles · click to fill</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { label: "Admin", email: "admin@coreerp.demo" },
+                { label: "Inventory", email: "inventory@coreerp.demo" },
+                { label: "Purchasing", email: "purchasing@coreerp.demo" },
+                { label: "CFO", email: "cfo@coreerp.demo" },
+                { label: "Compliance", email: "compliance@coreerp.demo" },
+              ].map(r => (
+                <button key={r.email} type="button" onClick={() => { setEmail(r.email); setPassword("demo1234"); }}
+                  className="text-[11px] px-2 py-1.5 rounded-md border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors text-left">
+                  <span className="font-semibold">{r.label}</span>
+                  <span className="text-muted-foreground block truncate text-[10px]">{r.email}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">Password: <code className="font-mono">demo1234</code> · Sign up to create them.</p>
+          </div>
         </Card>
       </div>
     </div>

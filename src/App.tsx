@@ -15,6 +15,8 @@ import CFODashboard from "./pages/CFODashboard";
 import Compliance from "./pages/Compliance";
 import AuditLog from "./pages/AuditLog";
 import Users from "./pages/Users";
+import Valuation from "./pages/Valuation";
+import ApprovalRules from "./pages/ApprovalRules";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/compliance" element={<Wrap><RoleGuard allowed={["compliance_officer","cfo","inventory_manager"]} readOnlyFor={["compliance_officer"]}><Compliance /></RoleGuard></Wrap>} />
             <Route path="/audit" element={<Wrap><RoleGuard allowed={["compliance_officer","cfo"]} readOnlyFor={["compliance_officer"]}><AuditLog /></RoleGuard></Wrap>} />
             <Route path="/users" element={<Wrap><RoleGuard allowed={[]}><Users /></RoleGuard></Wrap>} />
+            <Route path="/valuation" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","purchasing_manager"]}><Valuation /></RoleGuard></Wrap>} />
+            <Route path="/approval-rules" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><ApprovalRules /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

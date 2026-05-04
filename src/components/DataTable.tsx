@@ -199,7 +199,7 @@ export function DataTable<T>({
                 {activeFilters > 0 && <Button variant="ghost" size="sm" onClick={clearAll}><X className="h-3 w-3 mr-1" />Reset</Button>}
               </div>
               <div className="space-y-3">
-                {allColumns.filter(c => c.filter && c.filter !== false).map(c => (
+                {allColumns.filter(c => c.filter).map(c => (
                   <div key={c.key}>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">{c.header}</label>
                     {c.filter === "select" && (

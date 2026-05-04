@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_rules: {
+        Row: {
+          active: boolean
+          approver_l1_role: string
+          approver_l2_role: string
+          approver_l3_role: string
+          budget_allocated: number
+          budget_spent_mtd: number
+          created_at: string
+          department: string
+          id: string
+          threshold_l1: number
+          threshold_l2: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          approver_l1_role?: string
+          approver_l2_role?: string
+          approver_l3_role?: string
+          budget_allocated?: number
+          budget_spent_mtd?: number
+          created_at?: string
+          department: string
+          id?: string
+          threshold_l1?: number
+          threshold_l2?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          approver_l1_role?: string
+          approver_l2_role?: string
+          approver_l3_role?: string
+          budget_allocated?: number
+          budget_spent_mtd?: number
+          created_at?: string
+          department?: string
+          id?: string
+          threshold_l1?: number
+          threshold_l2?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -338,10 +383,16 @@ export type Database = {
           approved_by: string | null
           created_at: string
           created_by: string | null
+          department: string | null
           expected_date: string | null
           id: string
           notes: string | null
           po_number: string
+          receipt_posted_at: string | null
+          receipt_posted_by: string | null
+          receipt_status: Database["public"]["Enums"]["receipt_status"]
+          receipt_submitted_at: string | null
+          receipt_submitted_by: string | null
           received_date: string | null
           status: Database["public"]["Enums"]["po_status"]
           supplier_id: string
@@ -352,10 +403,16 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           created_by?: string | null
+          department?: string | null
           expected_date?: string | null
           id?: string
           notes?: string | null
           po_number: string
+          receipt_posted_at?: string | null
+          receipt_posted_by?: string | null
+          receipt_status?: Database["public"]["Enums"]["receipt_status"]
+          receipt_submitted_at?: string | null
+          receipt_submitted_by?: string | null
           received_date?: string | null
           status?: Database["public"]["Enums"]["po_status"]
           supplier_id: string
@@ -366,10 +423,16 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           created_by?: string | null
+          department?: string | null
           expected_date?: string | null
           id?: string
           notes?: string | null
           po_number?: string
+          receipt_posted_at?: string | null
+          receipt_posted_by?: string | null
+          receipt_status?: Database["public"]["Enums"]["receipt_status"]
+          receipt_submitted_at?: string | null
+          receipt_submitted_by?: string | null
           received_date?: string | null
           status?: Database["public"]["Enums"]["po_status"]
           supplier_id?: string
@@ -602,6 +665,7 @@ export type Database = {
         | "APPROVED"
         | "RECEIVED"
         | "CANCELLED"
+      receipt_status: "DRAFT" | "SUBMITTED" | "POSTED"
       valuation_method: "FIFO" | "LIFO" | "WAC"
     }
     CompositeTypes: {
@@ -758,6 +822,7 @@ export const Constants = {
         "RECEIVED",
         "CANCELLED",
       ],
+      receipt_status: ["DRAFT", "SUBMITTED", "POSTED"],
       valuation_method: ["FIFO", "LIFO", "WAC"],
     },
   },

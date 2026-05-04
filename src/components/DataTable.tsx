@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -153,6 +153,17 @@ export function DataTable<T>({
     }
     return out;
   }, [rows, allColumns, search, filters, dateFrom, dateTo, sortKey, sortDir]);
+
+  // Reset to first page whenever filters/search/sort/pageSize change
+  useEffect(() => { setPage(1); }, [search, filters, dateFrom, dateTo, sortKey, sortDir, pageSize, rows.length]);
+
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1;
+  const currentPage = Math.min(page, totalPages);
+  const paged = useMemo(() => {
+    if (pageSize <= 0) return filtered;
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage, pageSize]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }

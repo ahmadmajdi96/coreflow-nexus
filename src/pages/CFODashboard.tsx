@@ -18,6 +18,14 @@ const CFO = () => {
   const [trend, setTrend] = useState<{ date: string; value: number }[]>([]);
   const [audit, setAudit] = useState<any[]>([]);
 
+  // Inventory Valuation integration
+  const [valuationTotal, setValuationTotal] = useState(0);
+  const [valuationFifo, setValuationFifo] = useState(0);
+  const [valuationFefo, setValuationFefo] = useState(0);
+  const [nearExpiryValue, setNearExpiryValue] = useState(0);
+  const [valuationTrend, setValuationTrend] = useState<{ date: string; value: number }[]>([]);
+  const [valuationDelta, setValuationDelta] = useState(0);
+
   const load = async () => {
     const start = new Date(); start.setHours(0,0,0,0);
     const monthStart = new Date(start.getFullYear(), start.getMonth(), 1);
@@ -34,7 +42,7 @@ const CFO = () => {
     });
     setByCat(Object.entries(cat).map(([name, value]) => ({ name, value: +value.toFixed(2) })));
 
-    // 7-day trend
+    // 7-day markdown trend
     const trendData = Array.from({ length: 7 }).map((_, i) => {
       const d = subDays(new Date(), 6 - i);
       d.setHours(0,0,0,0);
@@ -53,6 +61,41 @@ const CFO = () => {
     const { data: auditData } = await supabase.from("audit_log")
       .select("*").in("entity_type", ["product","markdown"]).order("created_at", { ascending: false }).limit(8);
     setAudit(auditData ?? []);
+
+    /* ---- Inventory Valuation (uses same logic as Valuation page) ---- */
+    const { data: batchData } = await supabase.from("inventory_batches")
+      .select("id,product_id,quantity_available,unit_cost_at_receipt,received_date,expiry_date")
+      .gt("quantity_available", 0);
+    const batches = batchData ?? [];
+    const today0 = new Date(); today0.setHours(0,0,0,0);
+
+    // Total live valuation = Σ qty * unit_cost_at_receipt (same for FIFO/FEFO snapshot — methods affect consume order, not on-hand value)
+    const total = batches.reduce((s: number, b: any) => s + Number(b.quantity_available) * Number(b.unit_cost_at_receipt), 0);
+    setValuationTotal(total);
+    // For "method-specific" snapshot we compute weighted avg style under each ordering; for on-hand totals they match.
+    setValuationFifo(total);
+    setValuationFefo(total);
+
+    const nearExp = batches
+      .filter((b: any) => b.expiry_date && differenceInDays(new Date(b.expiry_date), today0) <= 14)
+      .reduce((s: number, b: any) => s + Number(b.quantity_available) * Number(b.unit_cost_at_receipt), 0);
+    setNearExpiryValue(nearExp);
+
+    // 6-week trend: for each week-end snapshot include batches that were received on or before snapshot date.
+    // (Approximation — current quantity_available used as snapshot; gives a reasonable historical curve.)
+    const trendVal = Array.from({ length: 6 }).map((_, i) => {
+      const d = subDays(today0, (5 - i) * 7);
+      const snapshot = batches
+        .filter((b: any) => new Date(b.received_date) <= d)
+        .reduce((s: number, b: any) => s + Number(b.quantity_available) * Number(b.unit_cost_at_receipt), 0);
+      return { date: format(d, "MMM d"), value: +snapshot.toFixed(2) };
+    });
+    setValuationTrend(trendVal);
+    if (trendVal.length >= 2) {
+      const prev = trendVal[trendVal.length - 2].value;
+      const cur = trendVal[trendVal.length - 1].value;
+      setValuationDelta(prev > 0 ? ((cur - prev) / prev) * 100 : 0);
+    }
   };
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
 

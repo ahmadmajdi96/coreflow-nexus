@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Layers, ShoppingCart, Tag, AlertTriangle, TrendingDown, Activity } from "lucide-react";
+import { Package, Layers, ShoppingCart, Tag, AlertTriangle, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 

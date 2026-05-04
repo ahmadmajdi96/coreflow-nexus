@@ -39,6 +39,8 @@ interface Props<T> {
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
   rowClassName?: (row: T) => string;
+  /** initial page size (default 25). Set to 0 to disable pagination. */
+  pageSize?: number;
 }
 
 type SortDir = "asc" | "desc" | null;
@@ -47,7 +49,7 @@ const alignClass = (a?: "left" | "right" | "center") =>
   a === "right" ? "text-right" : a === "center" ? "text-center" : "text-left";
 
 export function DataTable<T>({
-  rows, columns, createdAtKey, exportFilename, rightToolbar, emptyMessage = "No records.", rowKey, onRowClick, rowClassName,
+  rows, columns, createdAtKey, exportFilename, rightToolbar, emptyMessage = "No records.", rowKey, onRowClick, rowClassName, pageSize: initialPageSize = 25,
 }: Props<T>) {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -55,6 +57,8 @@ export function DataTable<T>({
   const [dateTo, setDateTo] = useState<Record<string, string>>({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [pageSize, setPageSize] = useState<number>(initialPageSize);
+  const [page, setPage] = useState(1);
 
   const getCreated = (r: T): Date | null => {
     if (!createdAtKey) return null;

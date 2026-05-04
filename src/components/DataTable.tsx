@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card } from "@/components/ui/card";
-import { Search, Filter, X, Download, ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, X, Download, ArrowUpDown, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { exportToCSV } from "@/lib/exporters";
 import { format } from "date-fns";
 

@@ -136,6 +136,85 @@ const CFO = () => {
         </div>
       </div>
 
+      {/* Inventory Valuation integration */}
+      <div className="mb-2 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2"><Warehouse className="h-5 w-5 text-primary" />Inventory Valuation</h2>
+          <p className="text-xs text-muted-foreground">Live on-hand value sourced from the Valuation engine — drill down for batch-level FIFO / FEFO breakdown.</p>
+        </div>
+        <Link to="/valuation"><Button variant="outline" size="sm">Open Valuation Report <ArrowRight className="h-4 w-4 ml-1.5" /></Button></Link>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="stat-card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="stat-label">On-Hand Value</div>
+              <div className="mt-2 text-3xl font-bold tabular-nums">${valuationTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className={`text-[11px] mt-1 flex items-center gap-1 ${valuationDelta >= 0 ? "text-success" : "text-destructive"}`}>
+                {valuationDelta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {valuationDelta >= 0 ? "+" : ""}{valuationDelta.toFixed(1)}% wk-over-wk
+              </div>
+            </div>
+            <div className="h-11 w-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center"><Warehouse className="h-5 w-5" /></div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="stat-label">FIFO Value</div>
+              <div className="mt-2 text-3xl font-bold tabular-nums">${valuationFifo.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">First-in, first-out</div>
+            </div>
+            <div className="h-11 w-11 rounded-lg bg-accent/10 text-accent flex items-center justify-center"><PackageCheck className="h-5 w-5" /></div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="stat-label">FEFO Value</div>
+              <div className="mt-2 text-3xl font-bold tabular-nums">${valuationFefo.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">First-expired, first-out</div>
+            </div>
+            <div className="h-11 w-11 rounded-lg bg-warning/10 text-warning flex items-center justify-center"><AlertTriangle className="h-5 w-5" /></div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="stat-label">Near-Expiry Exposure</div>
+              <div className="mt-2 text-3xl font-bold tabular-nums text-warning">${nearExpiryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Batches ≤14 days to expiry</div>
+            </div>
+            <div className="h-11 w-11 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center"><TrendingDown className="h-5 w-5" /></div>
+          </div>
+        </div>
+      </div>
+
+      <Card className="p-6 mb-6">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-semibold">6-Week Inventory Valuation Trend</h3>
+          <span className={`text-xs font-medium ${valuationDelta >= 0 ? "text-success" : "text-destructive"}`}>
+            {valuationDelta >= 0 ? "▲" : "▼"} {Math.abs(valuationDelta).toFixed(1)}% vs prior week
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">Snapshot of on-hand cost over time, computed from batch receipts.</p>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={valuationTrend}>
+            <defs>
+              <linearGradient id="valGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} formatter={(v: number) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+            <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#valGradient)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card className="p-6">
           <h3 className="font-semibold mb-1">7-Day Markdown Trend</h3>

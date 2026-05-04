@@ -241,11 +241,12 @@ export function DataTable<T>({
       </Card>
 
       <Card className="page-section">
+        <div className="max-h-[calc(100vh-280px)] min-h-[300px] overflow-auto rounded-md">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
             <TableRow>
               {allColumns.map(c => (
-                <TableHead key={c.key} className={`${alignClass(c.align)} ${c.className ?? ""}`}>
+                <TableHead key={c.key} className={`${alignClass(c.align)} bg-card ${c.className ?? ""}`}>
                   {c.sortable ? (
                     <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       {c.header}

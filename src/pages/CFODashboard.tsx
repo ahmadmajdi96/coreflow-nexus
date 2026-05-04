@@ -4,9 +4,11 @@ import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, LineChart, Line } from "recharts";
-import { TrendingDown, DollarSign, Percent, Activity } from "lucide-react";
+import { TrendingDown, DollarSign, Percent, Activity, Boxes, AlertTriangle, ArrowRight } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { Link } from "react-router-dom";
 
 const CFO = () => {
   const [today, setToday] = useState(0);

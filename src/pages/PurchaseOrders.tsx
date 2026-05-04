@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Trash2, Package, AlertCircle, CheckCircle2, XCircle, ThumbsUp, ThumbsDown, Wallet, FileWarning, Lock, Send, FileCheck, Edit3 } from "lucide-react";
 import { format } from "date-fns";
+import { ReceiptStatusActions } from "@/components/ReceiptStatusActions";
 
 interface Line { product_id: string; quantity: number; unit_cost: number }
 interface BatchEntry { batch_number?: string; expiry_date?: string; mfg_date?: string }

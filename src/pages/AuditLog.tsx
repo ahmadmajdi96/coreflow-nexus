@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Eye, Filter, X, ArrowRight, Download, FileText } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exporters";
+import { DataTable } from "@/components/DataTable";
 
 const ENTITY_TYPES = ["all", "product", "purchase_order", "inventory_batch", "markdown_event", "approval_rule"];
 const ACTIONS = ["all", "CREATE", "UPDATE", "DELETE", "APPROVE", "REJECT", "RECEIVE"];
@@ -143,38 +143,21 @@ const AuditLog = () => {
         </div>
       </Card>
 
-      <Card className="page-section">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity ID</TableHead>
-              <TableHead>Summary</TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">No audit entries match the filters.</TableCell></TableRow>}
-            {filtered.map(r => {
-              const summary = r.new_value ? Object.entries(r.new_value).slice(0, 2).map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`).join(" · ") : (r.old_value ? "Deleted record" : "—");
-              return (
-                <TableRow key={r.id} className="table-row-hover cursor-pointer" onClick={() => setSelected(r)}>
-                  <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{format(new Date(r.created_at), "MMM d, HH:mm:ss")}</TableCell>
-                  <TableCell><Badge variant="outline" className="font-mono text-[10px]">{r.entity_type}</Badge></TableCell>
-                  <TableCell>
-                    <span className={`pill ${ACTION_COLORS[r.action] || "bg-muted text-muted-foreground border-border"}`}>{r.action}</span>
-                  </TableCell>
-                  <TableCell className="font-mono text-[11px] text-muted-foreground">{r.entity_id ? r.entity_id.slice(0, 8) : "—"}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground max-w-md truncate">{summary}</TableCell>
-                  <TableCell><Eye className="h-4 w-4 text-muted-foreground" /></TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
+      <DataTable
+        rows={filtered}
+        rowKey={(r: any) => r.id}
+        exportFilename="audit-log"
+        onRowClick={(r: any) => setSelected(r)}
+        columns={[
+          { key: "created_at", header: "Time", accessor: (r: any) => new Date(r.created_at), sortable: true, filter: "date", cell: (r: any) => <span className="text-xs whitespace-nowrap text-muted-foreground">{format(new Date(r.created_at), "MMM d, HH:mm:ss")}</span>, exportValue: (r: any) => format(new Date(r.created_at), "yyyy-MM-dd HH:mm:ss") },
+          { key: "entity_type", header: "Entity", accessor: (r: any) => r.entity_type, filter: "select", sortable: true, cell: (r: any) => <Badge variant="outline" className="font-mono text-[10px]">{r.entity_type}</Badge> },
+          { key: "action", header: "Action", accessor: (r: any) => r.action, filter: "select", sortable: true, cell: (r: any) => <span className={`pill ${ACTION_COLORS[r.action] || "bg-muted text-muted-foreground border-border"}`}>{r.action}</span> },
+          { key: "entity_id", header: "Entity ID", accessor: (r: any) => r.entity_id ?? "", filter: "text", cell: (r: any) => <span className="font-mono text-[11px] text-muted-foreground">{r.entity_id ? r.entity_id.slice(0, 8) : "—"}</span> },
+          { key: "summary", header: "Summary", accessor: (r: any) => summarize(r), cell: (r: any) => <span className="text-xs text-muted-foreground line-clamp-1">{summarize(r)}</span> },
+          { key: "view", header: "", accessor: () => "", exportable: false, cell: () => <Eye className="h-4 w-4 text-muted-foreground" /> },
+        ]}
+        emptyMessage="No audit entries match the filters."
+      />
 
       <DetailDrawer entry={selected} onClose={() => setSelected(null)} />
     </>

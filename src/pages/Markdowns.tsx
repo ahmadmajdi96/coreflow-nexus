@@ -3,15 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { DataTable } from "@/components/DataTable";
 import { format } from "date-fns";
 
 const Markdowns = () => {
@@ -58,7 +57,7 @@ const Markdowns = () => {
     if (error) return toast.error(error.message);
     await supabase.from("products").update({ current_sales_price: newPrice }).eq("id", productId);
     if (batchId) await supabase.from("inventory_batches").update({ status: "MARKDOWN_ACTIVE" }).eq("id", batchId);
-    await supabase.from("audit_log").insert({ entity_type: "product", entity_id: productId, action: "PRICE_UPDATE", old_value: { price: original }, new_value: { price: newPrice, discount }, user_id: user?.id });
+    await supabase.from("audit_log").insert({ entity_type: "markdown", entity_id: productId, action: "CREATE", old_value: { price: original }, new_value: { price: newPrice, discount }, user_id: user?.id });
     toast.success("Markdown created and price updated");
     setOpen(false); load();
   };
@@ -80,18 +79,18 @@ const Markdowns = () => {
                 <div className="col-span-2"><Label>Product *</Label>
                   <Select value={productId} onValueChange={setProductId}>
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{products.map(p=><SelectItem key={p.id} value={p.id}>{p.sku} — {p.name} (${Number(p.current_sales_price).toFixed(2)})</SelectItem>)}</SelectContent>
+                    <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.sku} — {p.name} (${Number(p.current_sales_price).toFixed(2)})</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 {batches.length > 0 && (
                   <div className="col-span-2"><Label>Batch (optional)</Label>
                     <Select value={batchId} onValueChange={setBatchId}>
                       <SelectTrigger><SelectValue placeholder="All batches" /></SelectTrigger>
-                      <SelectContent>{batches.map(b=><SelectItem key={b.id} value={b.id}>{b.batch_number} — qty {Number(b.quantity_available).toFixed(0)}</SelectItem>)}</SelectContent>
+                      <SelectContent>{batches.map(b => <SelectItem key={b.id} value={b.id}>{b.batch_number} — qty {Number(b.quantity_available).toFixed(0)}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                 )}
-                <div><Label>Discount %</Label><Input type="number" min={1} max={90} value={discount} onChange={e=>setDiscount(Number(e.target.value))} /></div>
+                <div><Label>Discount %</Label><Input type="number" min={1} max={90} value={discount} onChange={e => setDiscount(Number(e.target.value))} /></div>
                 <div><Label>Reason</Label>
                   <Select value={reason} onValueChange={setReason}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -102,43 +101,33 @@ const Markdowns = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2"><Label>Expires on</Label><Input type="date" value={expDate} onChange={e=>setExpDate(e.target.value)} /></div>
-                <div className="col-span-2 flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Cancel</Button><Button type="submit">Apply markdown</Button></div>
+                <div className="col-span-2"><Label>Expires on</Label><Input type="date" value={expDate} onChange={e => setExpDate(e.target.value)} /></div>
+                <div className="col-span-2 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit">Apply markdown</Button></div>
               </form>
             </DialogContent>
           </Dialog>
         }
       />
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow><TableHead>Product</TableHead><TableHead>Batch</TableHead><TableHead className="text-right">Original</TableHead><TableHead className="text-right">New</TableHead><TableHead>Discount</TableHead><TableHead>Reason</TableHead><TableHead className="text-right">Impact</TableHead><TableHead>Status</TableHead><TableHead>Created</TableHead><TableHead></TableHead></TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 && <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-12">No markdowns yet.</TableCell></TableRow>}
-            {rows.map(r => (
-              <TableRow key={r.id}>
-                <TableCell><div className="font-medium">{r.products?.name}</div><div className="text-xs font-mono text-muted-foreground">{r.products?.sku}</div></TableCell>
-                <TableCell className="font-mono text-xs">{r.inventory_batches?.batch_number ?? "—"}</TableCell>
-                <TableCell className="text-right tabular-nums">${Number(r.original_price).toFixed(2)}</TableCell>
-                <TableCell className="text-right tabular-nums font-medium">${Number(r.new_price).toFixed(2)}</TableCell>
-                <TableCell><Badge variant="secondary">{r.discount_percent}%</Badge></TableCell>
-                <TableCell className="text-xs">{r.reason_code.replace(/_/g," ")}</TableCell>
-                <TableCell className="text-right tabular-nums text-destructive">-${Number(r.financial_impact).toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge className={r.status === "ACTIVE" ? "bg-success text-success-foreground" : ""} variant={r.status === "ACTIVE" ? "default" : "outline"}>{r.status}</Badge>
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{format(new Date(r.created_at), "PP")}</TableCell>
-                <TableCell>
-                  {r.status === "ACTIVE" && hasRole("cfo") && (
-                    <Button size="sm" variant="ghost" onClick={()=>cancel(r.id)}><X className="h-4 w-4" /></Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+
+      <DataTable
+        rows={rows}
+        rowKey={(r: any) => r.id}
+        exportFilename="markdowns"
+        createdAtKey="created_at"
+        columns={[
+          { key: "product", header: "Product", accessor: (r: any) => r.products?.name ?? "", filter: "text", sortable: true, cell: (r: any) => <div><div className="font-medium">{r.products?.name}</div><div className="text-xs font-mono text-muted-foreground">{r.products?.sku}</div></div> },
+          { key: "batch", header: "Batch", accessor: (r: any) => r.inventory_batches?.batch_number ?? "", filter: "text", cell: (r: any) => <span className="font-mono text-xs">{r.inventory_batches?.batch_number ?? "—"}</span> },
+          { key: "original", header: "Original", accessor: (r: any) => Number(r.original_price), align: "right", sortable: true, cell: (r: any) => <span className="tabular-nums">${Number(r.original_price).toFixed(2)}</span> },
+          { key: "new", header: "New", accessor: (r: any) => Number(r.new_price), align: "right", sortable: true, cell: (r: any) => <span className="tabular-nums font-medium">${Number(r.new_price).toFixed(2)}</span> },
+          { key: "discount", header: "Discount", accessor: (r: any) => Number(r.discount_percent), sortable: true, cell: (r: any) => <Badge variant="secondary">{r.discount_percent}%</Badge> },
+          { key: "reason_code", header: "Reason", accessor: (r: any) => r.reason_code, filter: "select", cell: (r: any) => <span className="text-xs">{r.reason_code.replace(/_/g, " ")}</span> },
+          { key: "impact", header: "Impact", accessor: (r: any) => Number(r.financial_impact), align: "right", sortable: true, cell: (r: any) => <span className="tabular-nums text-destructive">-${Number(r.financial_impact).toFixed(2)}</span> },
+          { key: "status", header: "Status", accessor: (r: any) => r.status, filter: "select", sortable: true, cell: (r: any) => <Badge className={r.status === "ACTIVE" ? "bg-success text-success-foreground" : ""} variant={r.status === "ACTIVE" ? "default" : "outline"}>{r.status}</Badge> },
+          { key: "effective_date", header: "Effective", accessor: (r: any) => r.effective_date, sortable: true, filter: "date", cell: (r: any) => <span className="text-xs text-muted-foreground">{format(new Date(r.effective_date), "PP")}</span>, exportValue: (r: any) => r.effective_date },
+          { key: "actions", header: "", accessor: () => "", align: "right", exportable: false, cell: (r: any) => r.status === "ACTIVE" && hasRole("cfo") && <Button size="sm" variant="ghost" onClick={() => cancel(r.id)}><X className="h-4 w-4" /></Button> },
+        ]}
+        emptyMessage="No markdowns yet."
+      />
     </>
   );
 };

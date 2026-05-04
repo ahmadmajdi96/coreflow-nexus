@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,8 +11,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Search, Pencil, Trash2, Layers as LayersIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Layers as LayersIcon } from "lucide-react";
 import { differenceInDays, format } from "date-fns";
+import { DataTable } from "@/components/DataTable";
 
 const blank = {
   id: "" as string | "",
@@ -24,7 +24,6 @@ const blank = {
 
 const Products = () => {
   const [rows, setRows] = useState<any[]>([]);
-  const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(blank);
   const [cats, setCats] = useState<any[]>([]);
@@ -87,52 +86,34 @@ const Products = () => {
     toast.success("Product deleted"); setConfirmDel(null); load();
   };
 
-  const filtered = rows.filter(r =>
-    !q || r.sku.toLowerCase().includes(q.toLowerCase()) || r.name.toLowerCase().includes(q.toLowerCase())
-  );
-
   return (
     <>
       <PageHeader title="Product Master" description="Manage SKUs, pricing, expiry-tracking rules and inspect batches."
         actions={<Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />New Product</Button>}
       />
-      <Card className="page-section">
-        <div className="p-4 border-b border-border">
-          <div className="relative max-w-sm">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search SKU or name…" className="pl-9" value={q} onChange={e=>setQ(e.target.value)} />
-          </div>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>SKU</TableHead><TableHead>Name</TableHead><TableHead>Category</TableHead>
-              <TableHead>Supplier</TableHead><TableHead className="text-right">Cost</TableHead>
-              <TableHead className="text-right">Price</TableHead><TableHead>Expiry</TableHead><TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">No products yet.</TableCell></TableRow>}
-            {filtered.map(r=>(
-              <TableRow key={r.id} className="hover:bg-muted/30">
-                <TableCell className="font-mono text-xs">{r.sku}</TableCell>
-                <TableCell className="font-medium">{r.name}</TableCell>
-                <TableCell>{r.categories?.name ?? "—"}</TableCell>
-                <TableCell>{r.suppliers?.name ?? "—"}</TableCell>
-                <TableCell className="text-right tabular-nums">${Number(r.unit_cost).toFixed(2)}</TableCell>
-                <TableCell className="text-right tabular-nums font-medium">${Number(r.current_sales_price).toFixed(2)}</TableCell>
-                <TableCell>{r.expiry_trackable ? <Badge variant="secondary">Tracked</Badge> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
-                <TableCell>{r.active ? <Badge className="bg-success text-success-foreground">Active</Badge> : <Badge variant="outline">Inactive</Badge>}</TableCell>
-                <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" onClick={()=>openEdit(r)}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={()=>setConfirmDel(r)}><Trash2 className="h-4 w-4" /></Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+      <DataTable
+        rows={rows}
+        rowKey={(r: any) => r.id}
+        exportFilename="products"
+        createdAtKey="created_at"
+        columns={[
+          { key: "sku", header: "SKU", accessor: (r: any) => r.sku, sortable: true, filter: "text", cell: (r: any) => <span className="font-mono text-xs">{r.sku}</span> },
+          { key: "name", header: "Name", accessor: (r: any) => r.name, sortable: true, filter: "text", cell: (r: any) => <span className="font-medium">{r.name}</span> },
+          { key: "category", header: "Category", accessor: (r: any) => r.categories?.name ?? "", filter: "select", cell: (r: any) => r.categories?.name ?? "—" },
+          { key: "supplier", header: "Supplier", accessor: (r: any) => r.suppliers?.name ?? "", filter: "select", cell: (r: any) => r.suppliers?.name ?? "—" },
+          { key: "unit_cost", header: "Cost", accessor: (r: any) => Number(r.unit_cost), align: "right", sortable: true, cell: (r: any) => <span className="tabular-nums">${Number(r.unit_cost).toFixed(2)}</span> },
+          { key: "current_sales_price", header: "Price", accessor: (r: any) => Number(r.current_sales_price), align: "right", sortable: true, cell: (r: any) => <span className="tabular-nums font-medium">${Number(r.current_sales_price).toFixed(2)}</span> },
+          { key: "expiry_trackable", header: "Expiry", accessor: (r: any) => r.expiry_trackable ? "Tracked" : "—", filter: "select", cell: (r: any) => r.expiry_trackable ? <Badge variant="secondary">Tracked</Badge> : <span className="text-muted-foreground text-xs">—</span> },
+          { key: "active", header: "Status", accessor: (r: any) => r.active ? "Active" : "Inactive", filter: "select", cell: (r: any) => r.active ? <Badge className="bg-success text-success-foreground">Active</Badge> : <Badge variant="outline">Inactive</Badge> },
+          { key: "actions", header: "", accessor: () => "", align: "right", exportable: false, cell: (r: any) => (
+            <div className="flex gap-1 justify-end" onClick={e => e.stopPropagation()}>
+              <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
+              <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirmDel(r)}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+          ) },
+        ]}
+        emptyMessage="No products yet."
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

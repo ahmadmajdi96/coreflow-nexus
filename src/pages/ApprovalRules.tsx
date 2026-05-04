@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/PageHeader";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Settings2, AlertTriangle, ChevronRight } from "lucide-react";
+import { DataTable } from "@/components/DataTable";
 
 const ROLES = [
   { value: "purchasing_manager", label: "Purchasing Manager" },
@@ -31,6 +31,7 @@ interface Rule {
   approver_l2_role: string;
   approver_l3_role: string;
   active: boolean;
+  created_at?: string;
 }
 
 const empty: Partial<Rule> = {
@@ -85,14 +86,14 @@ const ApprovalRules = () => {
                 <div className="space-y-2">
                   <Label>Escalation thresholds</Label>
                   <Card className="p-3 space-y-3 bg-muted/30">
-                    <RuleRow level="L1" thresholdLabel="Auto-approve below" value={editing.threshold_l1!} onValue={v => setEditing({ ...editing, threshold_l1: v })} role={editing.approver_l1_role!} onRole={r => setEditing({ ...editing, approver_l1_role: r })} />
-                    <RuleRow level="L2" thresholdLabel="Standard approval up to" value={editing.threshold_l2!} onValue={v => setEditing({ ...editing, threshold_l2: v })} role={editing.approver_l2_role!} onRole={r => setEditing({ ...editing, approver_l2_role: r })} />
-                    <RuleRow level="L3" thresholdLabel="Above L2 — escalation" value={null} onValue={() => {}} role={editing.approver_l3_role!} onRole={r => setEditing({ ...editing, approver_l3_role: r })} />
+                    <RuleRow level="L1" thresholdLabel="Auto-approve below" value={editing.threshold_l1!} onValue={(v: number) => setEditing({ ...editing, threshold_l1: v })} role={editing.approver_l1_role!} onRole={(r: string) => setEditing({ ...editing, approver_l1_role: r })} />
+                    <RuleRow level="L2" thresholdLabel="Standard approval up to" value={editing.threshold_l2!} onValue={(v: number) => setEditing({ ...editing, threshold_l2: v })} role={editing.approver_l2_role!} onRole={(r: string) => setEditing({ ...editing, approver_l2_role: r })} />
+                    <RuleRow level="L3" thresholdLabel="Above L2 (escalation)" value={null} onValue={() => {}} role={editing.approver_l3_role!} onRole={(r: string) => setEditing({ ...editing, approver_l3_role: r })} />
                   </Card>
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>Active</Label>
-                  <Switch checked={editing.active ?? true} onCheckedChange={v => setEditing({ ...editing, active: v })} />
+                  <Switch checked={editing.active ?? true} onCheckedChange={(v: boolean) => setEditing({ ...editing, active: v })} />
                 </div>
               </div>
               <DialogFooter>
@@ -111,53 +112,45 @@ const ApprovalRules = () => {
         </Card>
       )}
 
-      <Card className="page-section">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Department</TableHead>
-              <TableHead className="text-right">Budget</TableHead>
-              <TableHead>Utilization</TableHead>
-              <TableHead>Approval Path</TableHead>
-              <TableHead>Status</TableHead>
-              {canEdit && <TableHead></TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rules.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">No approval rules configured.</TableCell></TableRow>}
-            {rules.map(r => {
-              const used = r.budget_allocated > 0 ? (Number(r.budget_spent_mtd) / Number(r.budget_allocated)) * 100 : 0;
-              const overBudget = used > 100;
-              return (
-                <TableRow key={r.id} className="table-row-hover">
-                  <TableCell><div className="font-semibold flex items-center gap-2"><Settings2 className="h-4 w-4 text-primary" />{r.department}</div></TableCell>
-                  <TableCell className="text-right text-sm">
-                    <div className="tabular-nums font-medium">${Number(r.budget_allocated).toLocaleString()}</div>
-                    <div className="text-[11px] text-muted-foreground tabular-nums">spent ${Number(r.budget_spent_mtd).toLocaleString()}</div>
-                  </TableCell>
-                  <TableCell className="w-48">
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full transition-all" style={{ width: `${Math.min(100, used)}%`, background: overBudget ? "hsl(var(--destructive))" : "var(--gradient-primary)" }} />
-                    </div>
-                    <div className={`text-[11px] tabular-nums mt-0.5 ${overBudget ? "text-destructive font-semibold" : "text-muted-foreground"}`}>{used.toFixed(0)}% used</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                      <span className="pill bg-success/10 border-success/30 text-success">≤ ${Number(r.threshold_l1).toLocaleString()}<span className="text-muted-foreground ml-1">auto</span></span>
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                      <span className="pill bg-primary/10 border-primary/30 text-primary">≤ ${Number(r.threshold_l2).toLocaleString()}<span className="text-muted-foreground ml-1">{labelFor(r.approver_l2_role)}</span></span>
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                      <span className="pill bg-warning/10 border-warning/30 text-warning-foreground">&gt; ${Number(r.threshold_l2).toLocaleString()}<span className="text-muted-foreground ml-1">{labelFor(r.approver_l3_role)}</span></span>
-                    </div>
-                  </TableCell>
-                  <TableCell><Badge variant={r.active ? "default" : "outline"}>{r.active ? "Active" : "Inactive"}</Badge></TableCell>
-                  {canEdit && <TableCell><Button size="sm" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>Edit</Button></TableCell>}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
+      <DataTable
+        rows={rules as any[]}
+        rowKey={(r: any) => r.id}
+        exportFilename="approval-rules"
+        createdAtKey="created_at"
+        columns={[
+          { key: "department", header: "Department", accessor: (r: any) => r.department, sortable: true, filter: "text", cell: (r: any) => <div className="font-semibold flex items-center gap-2"><Settings2 className="h-4 w-4 text-primary" />{r.department}</div> },
+          { key: "budget", header: "Budget", accessor: (r: any) => Number(r.budget_allocated), sortable: true, align: "right", cell: (r: any) => (
+            <div className="text-right text-sm">
+              <div className="tabular-nums font-medium">${Number(r.budget_allocated).toLocaleString()}</div>
+              <div className="text-[11px] text-muted-foreground tabular-nums">spent ${Number(r.budget_spent_mtd).toLocaleString()}</div>
+            </div>
+          ) },
+          { key: "utilization", header: "Utilization", accessor: (r: any) => r.budget_allocated > 0 ? (Number(r.budget_spent_mtd) / Number(r.budget_allocated)) * 100 : 0, sortable: true, cell: (r: any) => {
+            const used = r.budget_allocated > 0 ? (Number(r.budget_spent_mtd) / Number(r.budget_allocated)) * 100 : 0;
+            const overBudget = used > 100;
+            return (
+              <div className="w-48">
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full transition-all" style={{ width: `${Math.min(100, used)}%`, background: overBudget ? "hsl(var(--destructive))" : "var(--gradient-primary)" }} />
+                </div>
+                <div className={`text-[11px] tabular-nums mt-0.5 ${overBudget ? "text-destructive font-semibold" : "text-muted-foreground"}`}>{used.toFixed(0)}% used</div>
+              </div>
+            );
+          } },
+          { key: "approval_path", header: "Approval Path", accessor: (r: any) => `L1<=${r.threshold_l1}/L2<=${r.threshold_l2}`, cell: (r: any) => (
+            <div className="flex items-center gap-1.5 flex-wrap text-xs">
+              <span className="pill bg-success/10 border-success/30 text-success">&le; ${Number(r.threshold_l1).toLocaleString()}<span className="text-muted-foreground ml-1">auto</span></span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              <span className="pill bg-primary/10 border-primary/30 text-primary">&le; ${Number(r.threshold_l2).toLocaleString()}<span className="text-muted-foreground ml-1">{labelFor(r.approver_l2_role)}</span></span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              <span className="pill bg-warning/10 border-warning/30 text-warning-foreground">&gt; ${Number(r.threshold_l2).toLocaleString()}<span className="text-muted-foreground ml-1">{labelFor(r.approver_l3_role)}</span></span>
+            </div>
+          ) },
+          { key: "active", header: "Status", accessor: (r: any) => r.active ? "Active" : "Inactive", filter: "select", cell: (r: any) => <Badge variant={r.active ? "default" : "outline"}>{r.active ? "Active" : "Inactive"}</Badge> },
+          ...(canEdit ? [{ key: "actions", header: "", accessor: () => "", exportable: false, align: "right" as const, cell: (r: any) => <Button size="sm" variant="ghost" onClick={(e: any) => { e.stopPropagation(); setEditing(r); setOpen(true); }}>Edit</Button> }] : []),
+        ]}
+        emptyMessage="No approval rules configured."
+      />
     </>
   );
 };

@@ -23,6 +23,7 @@ const sections: NavSection[] = [
   {
     label: "Procurement",
     items: [
+      { to: "/suppliers", label: "Suppliers", icon: Users },
       { to: "/purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
       { to: "/markdowns", label: "Markdowns", icon: Tag },
     ],

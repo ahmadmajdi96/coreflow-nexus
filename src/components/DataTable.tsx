@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card } from "@/components/ui/card";
-import { Search, Filter, X, Download, ArrowUpDown, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Search, Filter, X, Download, ArrowUpDown, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns3, RotateCcw,
+} from "lucide-react";
 import { exportToCSV } from "@/lib/exporters";
 import { format } from "date-fns";
 
@@ -16,31 +25,62 @@ export interface DataTableColumn<T> {
   accessor: (row: T) => any;
   cell?: (row: T) => ReactNode;
   sortable?: boolean;
-  /** "text" enables free-text contains-filter; "select" enables enum filter from data; "date" enables range; false hides filter */
   filter?: "text" | "select" | "date" | false;
-  /** override options for select filter */
   options?: string[];
   className?: string;
   align?: "left" | "right" | "center";
-  /** include in CSV export */
   exportable?: boolean;
   exportValue?: (row: T) => string | number;
+  /** When true, hide by default (user can toggle visible). */
+  hiddenByDefault?: boolean;
+  /** When true, the user cannot hide this column. */
+  alwaysVisible?: boolean;
+}
+
+export interface BulkAction<T> {
+  label: string;
+  icon?: ReactNode;
+  onRun: (rows: T[]) => void | Promise<void>;
+  variant?: "default" | "destructive" | "outline" | "secondary";
+  disabled?: (rows: T[]) => boolean;
+}
+
+export interface DataTableServerState {
+  page: number;
+  pageSize: number;
+  search: string;
+  filters: Record<string, string>;
+  dateFrom: Record<string, string>;
+  dateTo: Record<string, string>;
+  sortKey: string | null;
+  sortDir: "asc" | "desc" | null;
 }
 
 interface Props<T> {
   rows: T[];
   columns: DataTableColumn<T>[];
-  /** key of column or accessor returning created_at; auto-adds Created column when present */
   createdAtKey?: keyof T | ((r: T) => string | Date | null | undefined);
-  /** filename prefix used when exporting CSV */
   exportFilename: string;
   rightToolbar?: ReactNode;
   emptyMessage?: string;
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
   rowClassName?: (row: T) => string;
-  /** initial page size (default 25). Set to 0 to disable pagination. */
   pageSize?: number;
+  /** Stable identifier — enables URL state + per-user prefs persistence. */
+  tableId?: string;
+  /** Persist filter/search/page state in the URL query string (default: true when tableId set). */
+  persistInUrl?: boolean;
+  /** Enable row selection checkboxes. */
+  selectable?: boolean;
+  /** Bulk actions shown when rows are selected. */
+  bulkActions?: BulkAction<T>[];
+  /** Server-side pagination mode. */
+  serverSide?: {
+    totalRows: number;
+    onStateChange: (state: DataTableServerState) => void;
+    loading?: boolean;
+  };
 }
 
 type SortDir = "asc" | "desc" | null;
@@ -48,17 +88,82 @@ type SortDir = "asc" | "desc" | null;
 const alignClass = (a?: "left" | "right" | "center") =>
   a === "right" ? "text-right" : a === "center" ? "text-center" : "text-left";
 
+const PREFS_KEY = (tableId: string) => `dt:prefs:${tableId}`;
+
+interface UserPrefs {
+  hidden: string[];
+  sortKey: string | null;
+  sortDir: SortDir;
+  pageSize: number;
+}
+
 export function DataTable<T>({
-  rows, columns, createdAtKey, exportFilename, rightToolbar, emptyMessage = "No records.", rowKey, onRowClick, rowClassName, pageSize: initialPageSize = 25,
+  rows, columns, createdAtKey, exportFilename, rightToolbar,
+  emptyMessage = "No records.", rowKey, onRowClick, rowClassName,
+  pageSize: initialPageSize = 25, tableId, persistInUrl,
+  selectable = false, bulkActions = [], serverSide,
 }: Props<T>) {
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [dateFrom, setDateFrom] = useState<Record<string, string>>({});
-  const [dateTo, setDateTo] = useState<Record<string, string>>({});
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>(null);
-  const [pageSize, setPageSize] = useState<number>(initialPageSize);
-  const [page, setPage] = useState(1);
+  const useUrl = persistInUrl ?? !!tableId;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const qp = (k: string) => useUrl ? (searchParams.get(`${tableId ?? "dt"}_${k}`) ?? "") : "";
+
+  // ── Load persisted user prefs (column visibility, sort, page size) ──
+  const loadPrefs = (): UserPrefs => {
+    if (!tableId) return { hidden: [], sortKey: null, sortDir: null, pageSize: initialPageSize };
+    try {
+      const raw = localStorage.getItem(PREFS_KEY(tableId));
+      if (raw) return { hidden: [], sortKey: null, sortDir: null, pageSize: initialPageSize, ...JSON.parse(raw) };
+    } catch { /* ignore */ }
+    return {
+      hidden: columns.filter(c => c.hiddenByDefault).map(c => c.key),
+      sortKey: null, sortDir: null, pageSize: initialPageSize,
+    };
+  };
+
+  const [prefs, setPrefs] = useState<UserPrefs>(loadPrefs);
+  useEffect(() => {
+    if (!tableId) return;
+    try { localStorage.setItem(PREFS_KEY(tableId), JSON.stringify(prefs)); } catch { /* ignore */ }
+  }, [prefs, tableId]);
+
+  // ── State (URL-hydrated when enabled) ──
+  const parseObj = (s: string): Record<string, string> => {
+    if (!s) return {};
+    try { return JSON.parse(decodeURIComponent(s)); } catch { return {}; }
+  };
+
+  const [search, setSearch] = useState<string>(qp("q") || "");
+  const [filters, setFilters] = useState<Record<string, string>>(parseObj(qp("f")));
+  const [dateFrom, setDateFrom] = useState<Record<string, string>>(parseObj(qp("df")));
+  const [dateTo, setDateTo] = useState<Record<string, string>>(parseObj(qp("dt")));
+  const [sortKey, setSortKey] = useState<string | null>(qp("sk") || prefs.sortKey);
+  const [sortDir, setSortDir] = useState<SortDir>((qp("sd") as SortDir) || prefs.sortDir);
+  const [pageSize, setPageSize] = useState<number>(Number(qp("ps")) || prefs.pageSize);
+  const [page, setPage] = useState<number>(Number(qp("p")) || 1);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Persist sort + pageSize in user prefs
+  useEffect(() => { setPrefs(p => ({ ...p, sortKey, sortDir, pageSize })); }, [sortKey, sortDir, pageSize]);
+
+  // Sync state → URL
+  const writingUrl = useRef(false);
+  useEffect(() => {
+    if (!useUrl) return;
+    writingUrl.current = true;
+    const next = new URLSearchParams(searchParams);
+    const prefix = `${tableId ?? "dt"}_`;
+    const set = (k: string, v: string) => v ? next.set(prefix + k, v) : next.delete(prefix + k);
+    set("q", search);
+    set("f", Object.keys(filters).length ? encodeURIComponent(JSON.stringify(filters)) : "");
+    set("df", Object.keys(dateFrom).length ? encodeURIComponent(JSON.stringify(dateFrom)) : "");
+    set("dt", Object.keys(dateTo).length ? encodeURIComponent(JSON.stringify(dateTo)) : "");
+    set("sk", sortKey || "");
+    set("sd", sortDir || "");
+    set("ps", pageSize !== initialPageSize ? String(pageSize) : "");
+    set("p", page > 1 ? String(page) : "");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filters, dateFrom, dateTo, sortKey, sortDir, pageSize, page]);
 
   const getCreated = (r: T): Date | null => {
     if (!createdAtKey) return null;
@@ -66,7 +171,6 @@ export function DataTable<T>({
     return v ? new Date(v) : null;
   };
 
-  // Append Created column automatically if createdAtKey provided
   const allColumns = useMemo<DataTableColumn<T>[]>(() => {
     if (!createdAtKey) return columns;
     if (columns.some(c => c.key === "__created_at")) return columns;
@@ -88,6 +192,26 @@ export function DataTable<T>({
     ];
   }, [columns, createdAtKey]);
 
+  const visibleColumns = useMemo(
+    () => allColumns.filter(c => c.alwaysVisible || !prefs.hidden.includes(c.key)),
+    [allColumns, prefs.hidden],
+  );
+
+  const toggleColumnHidden = (key: string) => {
+    setPrefs(p => ({
+      ...p,
+      hidden: p.hidden.includes(key) ? p.hidden.filter(k => k !== key) : [...p.hidden, key],
+    }));
+  };
+
+  const resetPrefs = () => {
+    setPrefs({
+      hidden: allColumns.filter(c => c.hiddenByDefault).map(c => c.key),
+      sortKey: null, sortDir: null, pageSize: initialPageSize,
+    });
+    setSortKey(null); setSortDir(null); setPageSize(initialPageSize);
+  };
+
   const optionsFor = (col: DataTableColumn<T>) => {
     if (col.options) return col.options;
     const set = new Set<string>();
@@ -98,9 +222,17 @@ export function DataTable<T>({
     return Array.from(set).sort();
   };
 
+  // ── Server-side: emit state, skip client filtering/sorting/paging ──
+  const stateSig = JSON.stringify({ page, pageSize, search, filters, dateFrom, dateTo, sortKey, sortDir });
+  useEffect(() => {
+    if (!serverSide) return;
+    serverSide.onStateChange({ page, pageSize, search, filters, dateFrom, dateTo, sortKey, sortDir });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateSig]);
+
   const filtered = useMemo(() => {
+    if (serverSide) return rows;
     let out = rows;
-    // global search
     if (search.trim()) {
       const q = search.toLowerCase();
       out = out.filter(r => allColumns.some(c => {
@@ -109,7 +241,6 @@ export function DataTable<T>({
         return String(v).toLowerCase().includes(q);
       }));
     }
-    // per-column filters
     out = out.filter(r => {
       for (const c of allColumns) {
         if (c.filter === "select") {
@@ -135,7 +266,6 @@ export function DataTable<T>({
       }
       return true;
     });
-    // sort
     if (sortKey && sortDir) {
       const col = allColumns.find(c => c.key === sortKey);
       if (col) {
@@ -152,18 +282,18 @@ export function DataTable<T>({
       }
     }
     return out;
-  }, [rows, allColumns, search, filters, dateFrom, dateTo, sortKey, sortDir]);
+  }, [rows, allColumns, search, filters, dateFrom, dateTo, sortKey, sortDir, serverSide]);
 
-  // Reset to first page whenever filters/search/sort/pageSize change
-  useEffect(() => { setPage(1); }, [search, filters, dateFrom, dateTo, sortKey, sortDir, pageSize, rows.length]);
+  useEffect(() => { setPage(1); }, [search, filters, dateFrom, dateTo, sortKey, sortDir, pageSize]);
 
-  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1;
+  const totalRows = serverSide ? serverSide.totalRows : filtered.length;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(totalRows / pageSize)) : 1;
   const currentPage = Math.min(page, totalPages);
   const paged = useMemo(() => {
-    if (pageSize <= 0) return filtered;
+    if (serverSide || pageSize <= 0) return filtered;
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
-  }, [filtered, currentPage, pageSize]);
+  }, [filtered, currentPage, pageSize, serverSide]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) { setSortKey(key); setSortDir("asc"); return; }
@@ -179,10 +309,10 @@ export function DataTable<T>({
     Object.values(dateTo).filter(Boolean).length +
     (search ? 1 : 0);
 
-  const exportCsv = () => {
+  const exportRows = useCallback((source: T[], suffix: string) => {
     const cols = allColumns.filter(c => c.exportable !== false);
     const headers = cols.map(c => c.header);
-    const csvRows = filtered.map(r => cols.map(c => {
+    const csvRows = source.map(r => cols.map(c => {
       if (c.exportValue) return c.exportValue(r);
       const v = c.accessor(r);
       if (v === null || v === undefined) return "";
@@ -190,8 +320,35 @@ export function DataTable<T>({
       if (typeof v === "object") return JSON.stringify(v);
       return v as string | number;
     }));
-    exportToCSV(`${exportFilename}-${Date.now()}.csv`, headers, csvRows);
+    exportToCSV(`${exportFilename}-${suffix}-${Date.now()}.csv`, headers, csvRows);
+  }, [allColumns, exportFilename]);
+
+  // ── Selection ──
+  const pageKeys = useMemo(() => paged.map(rowKey), [paged, rowKey]);
+  const allOnPageSelected = pageKeys.length > 0 && pageKeys.every(k => selected.has(k));
+  const someOnPageSelected = pageKeys.some(k => selected.has(k)) && !allOnPageSelected;
+  const togglePage = () => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allOnPageSelected) pageKeys.forEach(k => next.delete(k));
+      else pageKeys.forEach(k => next.add(k));
+      return next;
+    });
   };
+  const toggleRow = (k: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(k) ? next.delete(k) : next.add(k);
+      return next;
+    });
+  };
+  const selectedRows = useMemo(() => {
+    if (selected.size === 0) return [];
+    return (serverSide ? rows : filtered).filter(r => selected.has(rowKey(r)));
+  }, [selected, filtered, rows, rowKey, serverSide]);
+  const clearSelection = () => setSelected(new Set());
+
+  const colCount = visibleColumns.length + (selectable ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -240,27 +397,119 @@ export function DataTable<T>({
               </div>
             </PopoverContent>
           </Popover>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                <Columns3 className="h-3.5 w-3.5 mr-1.5" />Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 max-h-[60vh] overflow-y-auto">
+              <DropdownMenuLabel>Show columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allColumns.map(c => (
+                <DropdownMenuCheckboxItem
+                  key={c.key}
+                  checked={!prefs.hidden.includes(c.key)}
+                  disabled={c.alwaysVisible}
+                  onCheckedChange={() => toggleColumnHidden(c.key)}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {c.header}
+                </DropdownMenuCheckboxItem>
+              ))}
+              {tableId && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={resetPrefs}>
+                    <RotateCcw className="h-3.5 w-3.5 mr-2" />Reset preferences
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {activeFilters > 0 && (
             <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={clearAll}>
               <X className="h-3 w-3 mr-1" />Clear
             </Button>
           )}
           <div className="text-xs text-muted-foreground ml-auto">
-            <span className="font-semibold text-foreground tabular-nums">{filtered.length}</span> of {rows.length}
+            <span className="font-semibold text-foreground tabular-nums">{totalRows}</span>
+            {!serverSide && <> of {rows.length}</>}
           </div>
-          <Button variant="outline" size="sm" className="h-9" onClick={exportCsv} disabled={filtered.length === 0}>
-            <Download className="h-3.5 w-3.5 mr-1.5" />Export CSV
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9" disabled={paged.length === 0 && filtered.length === 0}>
+                <Download className="h-3.5 w-3.5 mr-1.5" />Export
+                <ChevronDown className="h-3 w-3 ml-1 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => exportRows(paged, "page")} disabled={paged.length === 0}>
+                Current page ({paged.length})
+              </DropdownMenuItem>
+              {!serverSide && (
+                <DropdownMenuItem onClick={() => exportRows(filtered, "filtered")} disabled={filtered.length === 0}>
+                  All filtered rows ({filtered.length})
+                </DropdownMenuItem>
+              )}
+              {selectable && selected.size > 0 && (
+                <DropdownMenuItem onClick={() => exportRows(selectedRows, "selected")}>
+                  Selected ({selected.size})
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {rightToolbar}
         </div>
+
+        {selectable && selected.size > 0 && (
+          <div className="mt-3 flex items-center gap-2 flex-wrap rounded-md border bg-muted/50 px-3 py-2">
+            <span className="text-xs font-medium">{selected.size} selected</span>
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearSelection}>
+              <X className="h-3 w-3 mr-1" />Clear
+            </Button>
+            <div className="ml-auto flex items-center gap-2 flex-wrap">
+              {bulkActions.map((a, i) => (
+                <Button
+                  key={i}
+                  size="sm"
+                  variant={a.variant ?? "outline"}
+                  className="h-8"
+                  disabled={a.disabled?.(selectedRows)}
+                  onClick={() => a.onRun(selectedRows)}
+                >
+                  {a.icon}{a.icon ? <span className="ml-1.5">{a.label}</span> : a.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="page-section overflow-hidden">
-        <div className="max-h-[calc(100vh-320px)] min-h-[300px] overflow-auto rounded-md">
+        <div className="max-h-[calc(100vh-320px)] min-h-[300px] overflow-auto rounded-md relative">
+          {serverSide?.loading && (
+            <div className="absolute inset-0 z-20 bg-background/50 flex items-center justify-center text-xs text-muted-foreground">
+              Loading…
+            </div>
+          )}
           <Table className="w-full min-w-max table-auto">
             <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_hsl(var(--border))]">
               <TableRow>
-                {allColumns.map(c => (
+                {selectable && (
+                  <TableHead className="bg-card w-10">
+                    <Checkbox
+                      checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
+                      onCheckedChange={togglePage}
+                      aria-label="Select page"
+                    />
+                  </TableHead>
+                )}
+                {visibleColumns.map(c => (
                   <TableHead key={c.key} className={`${alignClass(c.align)} bg-card whitespace-nowrap ${c.className ?? ""}`}>
                     {c.sortable ? (
                       <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
@@ -275,26 +524,36 @@ export function DataTable<T>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={allColumns.length} className="text-center text-muted-foreground py-12">{emptyMessage}</TableCell></TableRow>
+              {paged.length === 0 && (
+                <TableRow><TableCell colSpan={colCount} className="text-center text-muted-foreground py-12">{emptyMessage}</TableCell></TableRow>
               )}
-              {paged.map(r => (
-                <TableRow
-                  key={rowKey(r)}
-                  className={`table-row-hover ${onRowClick ? "cursor-pointer" : ""} ${rowClassName ? rowClassName(r) : ""}`}
-                  onClick={onRowClick ? () => onRowClick(r) : undefined}
-                >
-                  {allColumns.map(c => (
-                    <TableCell key={c.key} className={`${alignClass(c.align)} ${c.className ?? ""}`}>
-                      {c.cell ? c.cell(r) : (c.accessor(r) ?? <span className="text-muted-foreground">—</span>)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+              {paged.map(r => {
+                const k = rowKey(r);
+                const isSel = selected.has(k);
+                return (
+                  <TableRow
+                    key={k}
+                    data-state={isSel ? "selected" : undefined}
+                    className={`table-row-hover ${onRowClick ? "cursor-pointer" : ""} ${rowClassName ? rowClassName(r) : ""}`}
+                    onClick={onRowClick ? () => onRowClick(r) : undefined}
+                  >
+                    {selectable && (
+                      <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={isSel} onCheckedChange={() => toggleRow(k)} aria-label="Select row" />
+                      </TableCell>
+                    )}
+                    {visibleColumns.map(c => (
+                      <TableCell key={c.key} className={`${alignClass(c.align)} ${c.className ?? ""}`}>
+                        {c.cell ? c.cell(r) : (c.accessor(r) ?? <span className="text-muted-foreground">—</span>)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
-        {pageSize > 0 && filtered.length > 0 && (
+        {pageSize > 0 && totalRows > 0 && (
           <div className="flex items-center justify-between gap-3 border-t px-3 py-2 flex-wrap">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Rows per page</span>
@@ -305,7 +564,7 @@ export function DataTable<T>({
                 </SelectContent>
               </Select>
               <span className="ml-2 tabular-nums">
-                {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filtered.length)} of {filtered.length}
+                {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, totalRows)} of {totalRows}
               </span>
             </div>
             <div className="flex items-center gap-1">

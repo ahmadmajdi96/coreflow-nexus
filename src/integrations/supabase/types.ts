@@ -245,8 +245,11 @@ export type Database = {
           default_sales_price: number
           expiry_trackable: boolean
           id: string
+          lead_time_days: number
           name: string
           primary_supplier_id: string | null
+          reorder_point: number
+          reorder_quantity: number
           sell_by_days: number | null
           shelf_life_days: number | null
           sku: string
@@ -263,8 +266,11 @@ export type Database = {
           default_sales_price?: number
           expiry_trackable?: boolean
           id?: string
+          lead_time_days?: number
           name: string
           primary_supplier_id?: string | null
+          reorder_point?: number
+          reorder_quantity?: number
           sell_by_days?: number | null
           shelf_life_days?: number | null
           sku: string
@@ -281,8 +287,11 @@ export type Database = {
           default_sales_price?: number
           expiry_trackable?: boolean
           id?: string
+          lead_time_days?: number
           name?: string
           primary_supplier_id?: string | null
+          reorder_point?: number
+          reorder_quantity?: number
           sell_by_days?: number | null
           shelf_life_days?: number | null
           sku?: string
@@ -539,6 +548,51 @@ export type Database = {
           },
         ]
       }
+      stock_movements: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          created_by: string | null
+          from_store_id: string | null
+          id: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes: string | null
+          product_id: string
+          quantity: number
+          reason: string | null
+          to_store_id: string | null
+          unit_cost: number
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_store_id?: string | null
+          id?: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          product_id: string
+          quantity: number
+          reason?: string | null
+          to_store_id?: string | null
+          unit_cost?: number
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_store_id?: string | null
+          id?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          reason?: string | null
+          to_store_id?: string | null
+          unit_cost?: number
+        }
+        Relationships: []
+      }
       stores: {
         Row: {
           id: string
@@ -565,22 +619,31 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          fill_rate: number
           id: string
+          lead_time_days: number
           name: string
+          on_time_rate: number
         }
         Insert: {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          fill_rate?: number
           id?: string
+          lead_time_days?: number
           name: string
+          on_time_rate?: number
         }
         Update: {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          fill_rate?: number
           id?: string
+          lead_time_days?: number
           name?: string
+          on_time_rate?: number
         }
         Relationships: []
       }
@@ -659,6 +722,13 @@ export type Database = {
         | "PROMOTIONAL"
       markdown_source: "MANUAL" | "AI_PRICING_ENGINE"
       markdown_status: "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED"
+      movement_type:
+        | "ADJUSTMENT"
+        | "TRANSFER"
+        | "WRITE_OFF"
+        | "CYCLE_COUNT"
+        | "RECEIPT"
+        | "SALE"
       po_status:
         | "DRAFT"
         | "PENDING_APPROVAL"
@@ -815,6 +885,14 @@ export const Constants = {
       ],
       markdown_source: ["MANUAL", "AI_PRICING_ENGINE"],
       markdown_status: ["PENDING", "ACTIVE", "EXPIRED", "CANCELLED"],
+      movement_type: [
+        "ADJUSTMENT",
+        "TRANSFER",
+        "WRITE_OFF",
+        "CYCLE_COUNT",
+        "RECEIPT",
+        "SALE",
+      ],
       po_status: [
         "DRAFT",
         "PENDING_APPROVAL",

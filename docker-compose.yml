@@ -1,0 +1,7 @@
+services:
+  web:
+    build: .
+    container_name: coreerp-web
+    ports:
+      - "6002:80"
+    restart: unless-stopped

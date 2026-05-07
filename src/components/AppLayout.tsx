@@ -57,11 +57,12 @@ const sections: NavSection[] = [
     label: "Administration",
     items: [
       { to: "/approval-rules", label: "Approval Rules", icon: Settings2 },
-      { to: "/sales-settings", label: "Sales Settings", icon: Settings2 },
       { to: "/users", label: "Users & Roles", icon: Users, adminOnly: true },
     ],
   },
 ];
+
+const _adminCleanup = null;
 
 const ROLE_LABEL: Record<string, string> = {
   system_admin: "Admin",

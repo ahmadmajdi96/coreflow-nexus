@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import {
   Plus, Trash2, Package, AlertCircle, CheckCircle2, XCircle, ThumbsUp, ThumbsDown,
   Wallet, FileWarning, Lock, Send, FileCheck, Edit3, Eye, Copy, Loader2,
-  Clock, FileDown, ListChecks, Truck, DollarSign, TrendingUp,
+  Clock, FileDown, ListChecks, Truck, DollarSign, TrendingUp, Upload, ShieldCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ReceiptStatusActions } from "@/components/ReceiptStatusActions";
@@ -45,6 +45,21 @@ const resolveApproval = (rule: Rule | undefined, total: number) => {
   if (total <= Number(rule.threshold_l1)) return { level: "L1" as const, requiredRole: null, label: "Auto-approve" };
   if (total <= Number(rule.threshold_l2)) return { level: "L2" as const, requiredRole: rule.approver_l2_role, label: ROLE_LABELS[rule.approver_l2_role] || rule.approver_l2_role };
   return { level: "L3" as const, requiredRole: rule.approver_l3_role, label: `${ROLE_LABELS[rule.approver_l3_role] || rule.approver_l3_role} (escalation)` };
+};
+
+const poHeaderIssues = (po: any): string[] => {
+  const issues: string[] = [];
+  if (!po.supplier_id) issues.push("Supplier missing");
+  if (!po.department) issues.push("Department missing");
+  if (!po.expected_date) issues.push("Expected date missing");
+  if (!po.purchase_order_lines?.length) issues.push("No line items");
+  (po.purchase_order_lines || []).forEach((l: any, i: number) => {
+    if (!l.product_id) issues.push(`Line ${i + 1}: product missing`);
+    if (!l.quantity || Number(l.quantity) <= 0) issues.push(`Line ${i + 1}: quantity must be > 0`);
+    if (Number(l.unit_cost) < 0) issues.push(`Line ${i + 1}: unit cost invalid`);
+  });
+  if (!Number(po.total_amount)) issues.push("Total is zero");
+  return issues;
 };
 
 const POs = () => {
@@ -394,14 +409,30 @@ const POs = () => {
                       <div><div className="text-muted-foreground">Budget After</div><div className={`text-lg font-bold tabular-nums ${wouldExceed ? "text-destructive" : "text-success"}`}>${(Number(rule?.budget_spent_mtd || 0) + Number(po.total_amount)).toLocaleString()}</div></div>
                     </div>
                     {po.notes && <p className="text-xs italic text-muted-foreground mt-3 p-2 bg-muted/40 rounded">{po.notes}</p>}
+                    {(() => {
+                      const issues = poHeaderIssues(po);
+                      if (!issues.length) return null;
+                      return (
+                        <div className="mt-3 p-2 rounded bg-destructive/10 border border-destructive/30 text-xs text-destructive">
+                          <div className="font-semibold flex items-center gap-1 mb-1"><ListChecks className="h-3 w-3" />Pre-submit checklist failed:</div>
+                          <ul className="list-disc list-inside space-y-0.5">{issues.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
                     {userCanApprove ? (
                       <>
-                        <Button size="sm" onClick={() => approve(po)} disabled={wouldExceed || isActing} className="bg-success hover:bg-success/90 text-success-foreground">
-                          {isActing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1.5" />}Approve
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setRejecting(po)} disabled={isActing} className="border-destructive/30 text-destructive hover:bg-destructive/10"><ThumbsDown className="h-4 w-4 mr-1.5" />Reject</Button>
+                        {(() => {
+                          const issues = poHeaderIssues(po);
+                          const blocked = wouldExceed || isActing || issues.length > 0;
+                          return <>
+                            <Button size="sm" onClick={() => approve(po)} disabled={blocked} className="bg-success hover:bg-success/90 text-success-foreground" title={issues.length ? issues.join("; ") : ""}>
+                              {isActing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1.5" />}Approve
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setRejecting(po)} disabled={isActing} className="border-destructive/30 text-destructive hover:bg-destructive/10"><ThumbsDown className="h-4 w-4 mr-1.5" />Reject</Button>
+                          </>;
+                        })()}
                       </>
                     ) : (
                       <p className="text-xs text-muted-foreground italic max-w-[180px] text-right">Requires {ap.label}</p>
@@ -492,7 +523,7 @@ const POs = () => {
         </DialogContent>
       </Dialog>
 
-      <PoDetailDialog po={detailPo} onClose={() => setDetailPo(null)} onClone={clonePo} />
+      <PoDetailDialog po={detailPo} rules={rules} onClose={() => setDetailPo(null)} onClone={clonePo} />
     </>
   );
 };
@@ -574,7 +605,7 @@ const BudgetPanel = ({ rule, total, approval, overBudget, overBy, projectedSpent
   );
 };
 
-const PoDetailDialog = ({ po, onClose, onClone }: { po: any; onClose: () => void; onClone: (po: any) => void }) => {
+const PoDetailDialog = ({ po, rules, onClose, onClone }: { po: any; rules: Rule[]; onClose: () => void; onClone: (po: any) => void }) => {
   const [audit, setAudit] = useState<any[]>([]);
   useEffect(() => {
     if (!po) return;
@@ -636,6 +667,45 @@ const PoDetailDialog = ({ po, onClose, onClone }: { po: any; onClose: () => void
         </div>
 
         {po.notes && <Card className="p-3 bg-muted/40 text-sm italic">{po.notes}</Card>}
+
+        {(() => {
+          const rule = rules.find(r => r.department === po.department);
+          const total = Number(po.total_amount);
+          const ap = resolveApproval(rule, total);
+          const allocated = Number(rule?.budget_allocated || 0);
+          const spent = Number(rule?.budget_spent_mtd || 0);
+          const projected = spent + total;
+          const overBy = allocated > 0 && projected > allocated ? projected - allocated : 0;
+          const issues = poHeaderIssues(po);
+          return (
+            <Card className={`p-4 border-2 ${overBy ? "border-destructive bg-destructive/5" : ap.level === "L3" ? "border-warning/40 bg-warning/5" : ap.level === "L2" ? "border-primary/30 bg-primary/5" : "border-success/30 bg-success/5"}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 font-semibold text-sm"><ShieldCheck className="h-4 w-4 text-primary" />Approval Breakdown</div>
+                <Badge variant="outline" className="font-mono">{ap.level} · {ap.label}</Badge>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div><div className="text-muted-foreground">Order Value</div><div className="text-base font-bold tabular-nums">${total.toLocaleString()}</div></div>
+                <div><div className="text-muted-foreground">L1 / L2 Thresholds</div><div className="text-sm font-medium tabular-nums">${Number(rule?.threshold_l1 || 0).toLocaleString()} / ${Number(rule?.threshold_l2 || 0).toLocaleString()}</div></div>
+                <div><div className="text-muted-foreground">Required Approver</div><div className="text-sm font-medium">{ap.requiredRole ? (ROLE_LABELS[ap.requiredRole] || ap.requiredRole) : "Auto-approved"}</div></div>
+                <div><div className="text-muted-foreground">Dept Budget Impact</div><div className={`text-sm font-bold tabular-nums ${overBy ? "text-destructive" : "text-success"}`}>{allocated ? `$${spent.toLocaleString()} → $${projected.toLocaleString()} / $${allocated.toLocaleString()}` : "No budget set"}</div></div>
+              </div>
+              {overBy > 0 && (
+                <div className="mt-2 p-2 rounded bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+                  <FileWarning className="h-3 w-3 inline mr-1" />Exceeds department budget by <span className="font-mono font-bold">${overBy.toFixed(2)}</span>.
+                </div>
+              )}
+              {issues.length > 0 && (
+                <div className="mt-2 p-2 rounded bg-warning/10 border border-warning/30 text-xs">
+                  <div className="font-semibold flex items-center gap-1 mb-1"><ListChecks className="h-3 w-3" />Pre-submit checklist ({issues.length} issue{issues.length > 1 ? "s" : ""}):</div>
+                  <ul className="list-disc list-inside space-y-0.5">{issues.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                </div>
+              )}
+              {issues.length === 0 && overBy === 0 && (
+                <div className="mt-2 text-xs text-success flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />All checklist items complete — ready for {ap.level === "L1" ? "auto-approval" : ap.label}.</div>
+              )}
+            </Card>
+          );
+        })()}
 
         <Separator />
 
@@ -720,6 +790,7 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
   const [batches, setBatches] = useState<Record<string, BatchEntry>>({});
   const [errors, setErrors] = useState<Record<string, ReceiptErrors>>({});
   const [touched, setTouched] = useState(false);
+  const [asnReport, setAsnReport] = useState<{ matched: number; skipped: number; total: number } | null>(null);
 
   if (!po) return null;
   const today = new Date().toISOString().slice(0, 10);
@@ -743,6 +814,46 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
     if (touched) setErrors({ ...errors, [lineId]: validateLine(lineId, isExp, next[lineId]) });
   };
 
+  const importAsn = async (file: File) => {
+    try {
+      const text = await file.text();
+      let rows: any[] = [];
+      if (file.name.toLowerCase().endsWith(".json")) {
+        const parsed = JSON.parse(text);
+        rows = Array.isArray(parsed) ? parsed : (parsed.lines || parsed.items || []);
+      } else {
+        // CSV: header row required
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (!lines.length) throw new Error("Empty file");
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        rows = lines.slice(1).map(ln => {
+          const cols = ln.split(",").map(c => c.trim());
+          const o: any = {};
+          headers.forEach((h, i) => o[h] = cols[i]);
+          return o;
+        });
+      }
+      const next = { ...batches };
+      let matched = 0, skipped = 0;
+      for (const row of rows) {
+        const sku = (row.sku || row.SKU || row.product_sku || "").toString().trim();
+        const line = po.purchase_order_lines.find((l: any) => l.products?.sku === sku);
+        if (!line) { skipped++; continue; }
+        next[line.id] = {
+          batch_number: (row.batch_number || row.batch || row.lot || "").toString().trim() || next[line.id]?.batch_number,
+          expiry_date: (row.expiry_date || row.expiry || row.exp || "").toString().trim() || next[line.id]?.expiry_date,
+          mfg_date: (row.mfg_date || row.mfg || row.manufactured || "").toString().trim() || next[line.id]?.mfg_date,
+        };
+        matched++;
+      }
+      setBatches(next);
+      setAsnReport({ matched, skipped, total: rows.length });
+      toast.success(`ASN imported: ${matched} matched, ${skipped} skipped`);
+    } catch (err: any) {
+      toast.error(`ASN parse failed: ${err.message}`);
+    }
+  };
+
   const submit = () => {
     setTouched(true);
     const allErrors: Record<string, ReceiptErrors> = {};
@@ -755,6 +866,16 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
     if (hasErrors) return toast.error("Please fix the validation errors before submitting");
     onSubmit(po, batches);
   };
+
+  // Pre-submit checklist
+  const checklist = po.purchase_order_lines.map((l: any) => {
+    const b = batches[l.id] || {};
+    const isExp = l.products.expiry_trackable;
+    const e = validateLine(l.id, isExp, b);
+    return { line: l, ok: Object.keys(e).length === 0, isExp };
+  });
+  const completedCount = checklist.filter((c: any) => c.ok).length;
+  const allComplete = completedCount === checklist.length;
 
   const expCount = po.purchase_order_lines.filter((l: any) => l.products.expiry_trackable).length;
 
@@ -769,16 +890,42 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
             {expCount > 0 && <> <span className="text-primary font-medium">{expCount} expiry-tracked line{expCount > 1 ? "s" : ""}</span> require valid batch and expiry data.</>}
           </p>
         </DialogHeader>
+
+        <Card className="p-3 bg-muted/30 flex items-center justify-between gap-3">
+          <div className="text-xs">
+            <div className="font-semibold flex items-center gap-1"><Upload className="h-3 w-3" />Import ASN (Advance Shipping Notice)</div>
+            <div className="text-muted-foreground">CSV/JSON with columns: <code>sku, batch_number, expiry_date, mfg_date</code>. Auto-fills matching lines.</div>
+            {asnReport && <div className="text-success mt-1">✓ {asnReport.matched}/{asnReport.total} rows matched · {asnReport.skipped} skipped (SKU not on PO)</div>}
+          </div>
+          <label className="shrink-0">
+            <input type="file" accept=".csv,.json,application/json,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importAsn(f); e.currentTarget.value = ""; }} />
+            <Button asChild variant="outline" size="sm" type="button"><span><Upload className="h-3.5 w-3.5 mr-1.5" />Upload ASN</span></Button>
+          </label>
+        </Card>
+
+        <Card className={`p-3 ${allComplete ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30"}`}>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 font-semibold">
+              <ListChecks className="h-3.5 w-3.5" />Pre-submit checklist · {completedCount}/{checklist.length} lines ready
+            </div>
+            {allComplete ? <CheckCircle2 className="h-4 w-4 text-success" /> : <AlertCircle className="h-4 w-4 text-warning" />}
+          </div>
+        </Card>
+
         <div className="space-y-3">
           {po.purchase_order_lines.map((l: any) => {
             const isExp = l.products.expiry_trackable;
             const b = batches[l.id] || {};
             const e = errors[l.id] || {};
+            const lineOk = checklist.find((c: any) => c.line.id === l.id)?.ok;
             return (
               <Card key={l.id} className={`p-4 transition-all ${isExp ? "border-l-4 border-l-primary" : ""} ${Object.keys(e).length ? "border-destructive/40 bg-destructive/5" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <div className="font-medium">{l.products.name} <span className="text-muted-foreground font-mono text-xs ml-2">{l.products.sku}</span></div>
+                    <div className="font-medium flex items-center gap-2">
+                      {lineOk ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <div className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground/40" />}
+                      {l.products.name} <span className="text-muted-foreground font-mono text-xs ml-1">{l.products.sku}</span>
+                    </div>
                     <div className="text-sm text-muted-foreground">Qty: {l.quantity} @ ${Number(l.unit_cost).toFixed(2)}</div>
                   </div>
                   {isExp && <Badge className="bg-primary/10 text-primary border-primary/30">Expiry Tracked</Badge>}
@@ -806,7 +953,7 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={acting}>Cancel</Button>
-          <Button onClick={submit} disabled={acting}>
+          <Button onClick={submit} disabled={acting || !allComplete} title={!allComplete ? "Complete all checklist items first" : ""}>
             {acting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}Submit Receipt
           </Button>
         </DialogFooter>

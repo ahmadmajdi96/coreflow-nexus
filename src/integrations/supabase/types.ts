@@ -853,6 +853,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      test_fefo_firing: {
+        Args: never
+        Returns: {
+          fired: boolean
+          message: string
+        }[]
+      }
     }
     Enums: {
       app_role:

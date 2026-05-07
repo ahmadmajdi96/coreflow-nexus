@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -8,12 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { ShoppingBag, Plus, Trash2, AlertTriangle, Package, Clock, Settings2, ShieldCheck, Check, X } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { DataTable } from "@/components/DataTable";
 import { useAuth } from "@/hooks/useAuth";
+
+type SaleStatus = "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED" | "POSTED";
 
 interface CartLine {
   product_id: string;
@@ -22,6 +25,26 @@ interface CartLine {
   insufficient?: number;
   blockedReason?: string;
 }
+
+const statusBadge = (s: SaleStatus) => {
+  const map: Record<SaleStatus, string> = {
+    NOT_REQUIRED: "border-muted text-muted-foreground",
+    PENDING: "border-warning/40 text-warning",
+    APPROVED: "border-info/40 text-info",
+    REJECTED: "border-destructive/40 text-destructive",
+    POSTED: "border-success/40 text-success",
+  };
+  return map[s] ?? "border-muted text-muted-foreground";
+};
+
+const computeStatus = (tx: any): SaleStatus => {
+  if (tx.approval_status === "REJECTED") return "REJECTED";
+  if (tx.approval_status === "PENDING") return "PENDING";
+  // NOT_REQUIRED or APPROVED → posted iff items exist (sales_items length > 0) OR posted_at set
+  if (tx.posted_at || (tx.sales_items && tx.sales_items.length > 0)) return "POSTED";
+  if (tx.approval_status === "APPROVED") return "APPROVED";
+  return "NOT_REQUIRED";
+};
 
 const Sales = () => {
   const { user, hasRole } = useAuth();
@@ -32,36 +55,38 @@ const Sales = () => {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [open, setOpen] = useState(false);
   const [recent, setRecent] = useState<any[]>([]);
+  const [profilesById, setProfilesById] = useState<Record<string, string>>({});
 
-  // Settings
   const [settings, setSettings] = useState<{ id: string; sell_by_buffer_days: number; sales_approval_threshold: number } | null>(null);
-  const [bufferInput, setBufferInput] = useState(0);
-  const [thresholdInput, setThresholdInput] = useState(5000);
 
-  // Sale-level fields
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "PAID" | "PARTIAL" | "REFUNDED">("PENDING");
   const [notes, setNotes] = useState("");
 
-  const canManageSettings = hasRole("system_admin") || hasRole("cfo");
   const canApprove = hasRole("system_admin") || hasRole("cfo");
+  const canManageSettings = canApprove;
 
   const reload = async () => {
     const [{ data: p }, { data: b }, { data: s }, { data: tx }, { data: st }] = await Promise.all([
       supabase.from("products").select("*").eq("active", true),
       supabase.from("inventory_batches").select("*").eq("status", "AVAILABLE").gt("quantity_available", 0),
       supabase.from("stores").select("*"),
-      supabase.from("sales_transactions").select("*, sales_items(*, products(name,sku), inventory_batches(batch_number,expiry_date))").order("occurred_at", { ascending: false }).limit(50),
+      supabase.from("sales_transactions").select("*, sales_items(id, quantity, unit_price, products(name,sku), inventory_batches(batch_number,expiry_date))").order("occurred_at", { ascending: false }).limit(100),
       supabase.from("app_settings").select("*").limit(1).maybeSingle(),
     ]);
     setProducts(p ?? []); setBatches(b ?? []); setStores(s ?? []); setRecent(tx ?? []);
     if (!storeId && s?.[0]) setStoreId(s[0].id);
-    if (st) {
-      setSettings(st as any);
-      setBufferInput(Number((st as any).sell_by_buffer_days ?? 0));
-      setThresholdInput(Number((st as any).sales_approval_threshold ?? 5000));
+    if (st) setSettings(st as any);
+
+    // Resolve approver/poster names
+    const ids = Array.from(new Set((tx ?? []).flatMap((t: any) => [t.approved_by, t.posted_by]).filter(Boolean)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      const map: Record<string, string> = {};
+      (profs ?? []).forEach((pr: any) => { map[pr.id] = pr.full_name || pr.email || pr.id; });
+      setProfilesById(map);
     }
   };
   useEffect(() => { reload(); }, []);
@@ -70,11 +95,12 @@ const Sales = () => {
   const sellByBuffer = settings?.sell_by_buffer_days ?? 0;
   const approvalThreshold = settings?.sales_approval_threshold ?? 5000;
 
-  const allocateFEFO = (productId: string, qty: number): CartLine => {
+  const allocateFEFO = (productId: string, qty: number, freshBatches?: any[]): CartLine => {
     const product = products.find(p => p.id === productId);
     const productBuffer = product?.sell_by_days ?? 0;
     const effectiveBuffer = Math.max(sellByBuffer, productBuffer);
-    const candidates = batches
+    const src = freshBatches ?? batches;
+    const candidates = src
       .filter(b => b.product_id === productId && (!storeId || !b.store_id || b.store_id === storeId))
       .map(b => {
         const expiry = b.expiry_date ? new Date(b.expiry_date) : null;
@@ -115,7 +141,6 @@ const Sales = () => {
   const cartTotal = useMemo(() =>
     cart.reduce((s, l) => s + l.allocations.reduce((ss, a) => ss + a.qty * a.unit_price, 0), 0),
   [cart]);
-
   const hasBlockers = cart.some(l => l.insufficient || l.allocations.length === 0);
   const requiresApproval = cartTotal >= approvalThreshold;
 
@@ -124,14 +149,24 @@ const Sales = () => {
     setPaymentStatus("PENDING"); setNotes("");
   };
 
+  /** Insert sales_items for a tx; returns true on success. */
+  const postItems = async (txId: string, lines: CartLine[]) => {
+    const items = lines.flatMap(l => l.allocations.map(a => ({
+      transaction_id: txId, product_id: l.product_id, batch_id: a.batch_id,
+      quantity: a.qty, unit_price: a.unit_price, discount_applied: 0, tax_amount: 0,
+    })));
+    if (!items.length) return { ok: false, error: "No items to post" };
+    const { error } = await supabase.from("sales_items").insert(items);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  };
+
   const submitSale = async (autoApprove: boolean) => {
     if (!cart.length) return toast.error("Cart is empty");
     if (hasBlockers) return toast.error("Resolve insufficient stock or expiry blocks before posting");
 
-    const needsApproval = requiresApproval && !autoApprove;
-    const approvalStatus = requiresApproval
-      ? (autoApprove && canApprove ? "APPROVED" : "PENDING")
-      : "NOT_REQUIRED";
+    const willPostNow = !requiresApproval || (autoApprove && canApprove);
+    const approvalStatus = requiresApproval ? (willPostNow ? "APPROVED" : "PENDING") : "NOT_REQUIRED";
 
     const txCode = `SO-${Date.now()}`;
     const { data: tx, error } = await supabase.from("sales_transactions").insert({
@@ -139,70 +174,76 @@ const Sales = () => {
       customer_name: customerName || null, customer_email: customerEmail || null,
       invoice_number: invoiceNumber || null, payment_status: paymentStatus,
       approval_status: approvalStatus,
-      approved_by: approvalStatus === "APPROVED" ? user?.id : null,
-      approved_at: approvalStatus === "APPROVED" ? new Date().toISOString() : null,
+      approved_by: willPostNow && requiresApproval ? user?.id : null,
+      approved_at: willPostNow && requiresApproval ? new Date().toISOString() : null,
       notes: notes || null,
+      pending_cart: willPostNow ? null : (cart as any),
     } as any).select().single();
     if (error || !tx) return toast.error(error?.message || "Failed to create sale");
 
-    // Only post items (decrement stock) when not pending approval
-    if (!needsApproval) {
-      const items = cart.flatMap(l => l.allocations.map(a => ({
-        transaction_id: tx.id, product_id: l.product_id, batch_id: a.batch_id,
-        quantity: a.qty, unit_price: a.unit_price, discount_applied: 0, tax_amount: 0,
-      })));
-      const { error: itErr } = await supabase.from("sales_items").insert(items);
-      if (itErr) {
+    if (willPostNow) {
+      const r = await postItems(tx.id, cart);
+      if (!r.ok) {
         await supabase.from("sales_transactions").delete().eq("id", tx.id);
-        return toast.error(`Sale blocked: ${itErr.message}`);
+        return toast.error(`Sale blocked: ${r.error}`);
       }
+      await supabase.from("sales_transactions").update({
+        posted_at: new Date().toISOString(), posted_by: user?.id,
+      } as any).eq("id", tx.id);
     }
 
     await supabase.from("audit_log").insert({
       entity_type: "sales_transaction", entity_id: tx.id,
-      action: needsApproval ? "SALE_PENDING_APPROVAL" : "SALE",
+      action: willPostNow ? "SALE_POSTED" : "SALE_PENDING_APPROVAL",
       new_value: {
         transaction_id: txCode, total: cartTotal, customer: customerName,
-        invoice: invoiceNumber, payment_status: paymentStatus,
-        approval_status: approvalStatus, store_id: storeId,
-      },
-      user_id: user?.id,
+        invoice: invoiceNumber, payment_status: paymentStatus, approval_status: approvalStatus,
+      }, user_id: user?.id,
     });
 
-    toast.success(
-      needsApproval
-        ? `Sale ${txCode} created — awaiting approval (≥ $${approvalThreshold})`
-        : `Sale ${txCode} posted · $${cartTotal.toFixed(2)}`
-    );
+    toast.success(willPostNow
+      ? `Sale ${txCode} posted · $${cartTotal.toFixed(2)}`
+      : `Sale ${txCode} submitted — awaiting approval`);
     resetForm(); setOpen(false); reload();
   };
 
   const approveSale = async (tx: any) => {
     if (!canApprove) return toast.error("You cannot approve sales");
     if (tx.approval_status !== "PENDING") return;
-    // Re-allocate FEFO at approval time and insert items
-    const items: any[] = [];
-    // Walk products in tx via the cart-like reconstruction is impossible (cart not stored).
-    // Instead, we rely on the original sales_items NOT existing yet — we cannot reconstruct.
-    // So when creating a pending sale, we also stash the cart in tx.notes as JSON under a marker.
-    // For now: approval simply marks it APPROVED; items must be added by re-posting through dialog.
-    const { error } = await supabase.from("sales_transactions")
-      .update({ approval_status: "APPROVED", approved_by: user?.id, approved_at: new Date().toISOString() } as any)
-      .eq("id", tx.id);
-    if (error) return toast.error(error.message);
+    const pending = (tx.pending_cart ?? []) as CartLine[];
+    if (!pending.length) return toast.error("No pending cart attached to this sale");
+
+    // Re-allocate FEFO with current batch availability before posting
+    const { data: fresh } = await supabase.from("inventory_batches")
+      .select("*").eq("status", "AVAILABLE").gt("quantity_available", 0);
+    const reallocated = pending.map((l: CartLine) => allocateFEFO(l.product_id, l.qty, fresh ?? []));
+    if (reallocated.some(l => l.insufficient || !l.allocations.length)) {
+      return toast.error("Insufficient stock or expiry blocks at approval time. Reject and recreate.");
+    }
+
+    const r = await postItems(tx.id, reallocated);
+    if (!r.ok) return toast.error(`Posting failed: ${r.error}`);
+
+    const now = new Date().toISOString();
+    await supabase.from("sales_transactions").update({
+      approval_status: "APPROVED", approved_by: user?.id, approved_at: now,
+      posted_at: now, posted_by: user?.id, pending_cart: null,
+    } as any).eq("id", tx.id);
+
     await supabase.from("audit_log").insert({
-      entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_APPROVED",
-      new_value: { transaction_id: tx.transaction_id }, user_id: user?.id,
+      entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_APPROVED_AND_POSTED",
+      new_value: { transaction_id: tx.transaction_id, total: tx.total_amount }, user_id: user?.id,
     });
-    toast.success(`Approved ${tx.transaction_id}`);
+    toast.success(`Approved & posted ${tx.transaction_id}`);
     reload();
   };
 
   const rejectSale = async (tx: any) => {
     if (!canApprove) return;
-    const { error } = await supabase.from("sales_transactions")
-      .update({ approval_status: "REJECTED", approved_by: user?.id, approved_at: new Date().toISOString() } as any)
-      .eq("id", tx.id);
+    const { error } = await supabase.from("sales_transactions").update({
+      approval_status: "REJECTED", approved_by: user?.id, approved_at: new Date().toISOString(),
+      pending_cart: null,
+    } as any).eq("id", tx.id);
     if (error) return toast.error(error.message);
     await supabase.from("audit_log").insert({
       entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_REJECTED",
@@ -212,41 +253,17 @@ const Sales = () => {
     reload();
   };
 
-  const saveSettings = async () => {
-    if (!settings) return;
-    const { error } = await supabase.from("app_settings")
-      .update({ sell_by_buffer_days: bufferInput, sales_approval_threshold: thresholdInput, updated_at: new Date().toISOString(), updated_by: user?.id } as any)
-      .eq("id", settings.id);
-    if (error) return toast.error(error.message);
-    toast.success("Settings updated");
-    reload();
-  };
-
   return (
-    <>
+    <TooltipProvider>
       <PageHeader
         title="Sales / POS"
         description={`FEFO allocator with ${sellByBuffer}-day sell-by buffer · approval required ≥ $${approvalThreshold.toLocaleString()}`}
         actions={
           <div className="flex gap-2">
             {canManageSettings && (
-              <Popover>
-                <PopoverTrigger asChild><Button variant="outline"><Settings2 className="h-4 w-4 mr-2" />Settings</Button></PopoverTrigger>
-                <PopoverContent className="w-80 space-y-3">
-                  <div className="font-medium text-sm">Sales Settings</div>
-                  <div>
-                    <Label className="text-xs">Sell-by buffer (days)</Label>
-                    <Input type="number" min={0} value={bufferInput} onChange={e => setBufferInput(Number(e.target.value))} />
-                    <p className="text-[11px] text-muted-foreground mt-1">Block batches expiring within this many days.</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Approval threshold ($)</Label>
-                    <Input type="number" min={0} value={thresholdInput} onChange={e => setThresholdInput(Number(e.target.value))} />
-                    <p className="text-[11px] text-muted-foreground mt-1">Sales at/above this total require approval.</p>
-                  </div>
-                  <Button size="sm" className="w-full" onClick={saveSettings}>Save</Button>
-                </PopoverContent>
-              </Popover>
+              <Button variant="outline" asChild>
+                <Link to="/sales-settings"><Settings2 className="h-4 w-4 mr-2" />Settings</Link>
+              </Button>
             )}
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild><Button><ShoppingBag className="h-4 w-4 mr-2" />New Sale</Button></DialogTrigger>
@@ -392,22 +409,41 @@ const Sales = () => {
             }>{r.payment_status}</Badge>,
           },
           {
-            key: "approval", header: "Approval", accessor: (r: any) => r.approval_status, filter: "select",
-            options: ["NOT_REQUIRED", "PENDING", "APPROVED", "REJECTED"],
-            cell: (r: any) => <Badge variant="outline" className={
-              r.approval_status === "APPROVED" ? "border-success/40 text-success" :
-              r.approval_status === "PENDING" ? "border-warning/40 text-warning" :
-              r.approval_status === "REJECTED" ? "border-destructive/40 text-destructive" :
-              "border-muted text-muted-foreground"
-            }>{r.approval_status}</Badge>,
+            key: "status", header: "Status", accessor: (r: any) => computeStatus(r), filter: "select",
+            options: ["NOT_REQUIRED", "PENDING", "APPROVED", "REJECTED", "POSTED"],
+            cell: (r: any) => {
+              const s = computeStatus(r);
+              const approver = r.approved_by ? profilesById[r.approved_by] : null;
+              const poster = r.posted_by ? profilesById[r.posted_by] : null;
+              const tooltip = (
+                <div className="text-xs space-y-0.5">
+                  <div>Status: <b>{s}</b></div>
+                  {r.approved_at && <div>Approved: {format(new Date(r.approved_at), "PPp")}{approver ? ` by ${approver}` : ""}</div>}
+                  {r.posted_at && <div>Posted: {format(new Date(r.posted_at), "PPp")}{poster ? ` by ${poster}` : ""}</div>}
+                  {!r.approved_at && !r.posted_at && <div className="text-muted-foreground">No state changes yet</div>}
+                </div>
+              );
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className={`${statusBadge(s)} cursor-help`}>{s}</Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>{tooltip}</TooltipContent>
+                </Tooltip>
+              );
+            },
+          },
+          {
+            key: "approver", header: "Approver", accessor: (r: any) => r.approved_by ? (profilesById[r.approved_by] ?? "—") : "",
+            cell: (r: any) => r.approved_by ? <span className="text-xs">{profilesById[r.approved_by] ?? r.approved_by.slice(0, 8)}</span> : <span className="text-muted-foreground">—</span>,
           },
           { key: "total", header: "Total", accessor: (r: any) => Number(r.total_amount), sortable: true, align: "right", cell: (r: any) => <span className="tabular-nums font-semibold">${Number(r.total_amount).toFixed(2)}</span> },
           {
             key: "actions", header: "", accessor: () => "", exportable: false,
             cell: (r: any) => r.approval_status === "PENDING" && canApprove ? (
               <div className="flex gap-1 justify-end">
-                <Button size="sm" variant="outline" onClick={() => approveSale(r)}><Check className="h-3 w-3" /></Button>
-                <Button size="sm" variant="outline" onClick={() => rejectSale(r)}><X className="h-3 w-3" /></Button>
+                <Button size="sm" variant="outline" onClick={() => approveSale(r)} title="Approve & post"><Check className="h-3 w-3" /></Button>
+                <Button size="sm" variant="outline" onClick={() => rejectSale(r)} title="Reject"><X className="h-3 w-3" /></Button>
               </div>
             ) : null,
             align: "right",
@@ -415,7 +451,7 @@ const Sales = () => {
         ]}
         emptyMessage="No sales recorded yet."
       />
-    </>
+    </TooltipProvider>
   );
 };
 

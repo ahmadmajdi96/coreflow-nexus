@@ -38,6 +38,8 @@ const SalesReturns = () => {
   const [selectedTxId, setSelectedTxId] = useState<string>("");
   const [reason, setReason] = useState("");
   const [lines, setLines] = useState<ReturnLine[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [lineErrors, setLineErrors] = useState<Record<string, { title: string; detail: string }>>({});
 
   const reload = async () => {
     const [{ data: r }, { data: tx }] = await Promise.all([

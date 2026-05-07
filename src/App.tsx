@@ -67,7 +67,7 @@ const App = () => (
             <Route path="/sales-returns" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","system_admin"]}><SalesReturns /></RoleGuard></Wrap>} />
             <Route path="/sales-settings" element={<Wrap><RoleGuard allowed={["cfo","system_admin"]}><SalesSettings /></RoleGuard></Wrap>} />
             <Route path="/sales/:id" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo","system_admin"]}><SaleDetail /></RoleGuard></Wrap>} />
-            <Route path="/fefo-health" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","system_admin","compliance_officer"]}><FefoHealth /></RoleGuard></Wrap>} />
+            <Route path="/fefo-health" element={<Wrap><RoleGuard allowed={["cfo","system_admin"]}><FefoHealth /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

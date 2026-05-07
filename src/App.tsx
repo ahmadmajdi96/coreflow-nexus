@@ -18,6 +18,12 @@ import AuditLog from "./pages/AuditLog";
 import Users from "./pages/Users";
 import Valuation from "./pages/Valuation";
 import ApprovalRules from "./pages/ApprovalRules";
+import StockMovements from "./pages/StockMovements";
+import Replenishment from "./pages/Replenishment";
+import StockByLocation from "./pages/StockByLocation";
+import SalesVelocity from "./pages/SalesVelocity";
+import WasteReport from "./pages/WasteReport";
+import SupplierPerformance from "./pages/SupplierPerformance";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -46,6 +52,12 @@ const App = () => (
             <Route path="/users" element={<Wrap><RoleGuard allowed={[]}><Users /></RoleGuard></Wrap>} />
             <Route path="/valuation" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","purchasing_manager"]}><Valuation /></RoleGuard></Wrap>} />
             <Route path="/approval-rules" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><ApprovalRules /></RoleGuard></Wrap>} />
+            <Route path="/movements" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","compliance_officer","cfo"]} readOnlyFor={["compliance_officer","cfo"]}><StockMovements /></RoleGuard></Wrap>} />
+            <Route path="/replenishment" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo"]}><Replenishment /></RoleGuard></Wrap>} />
+            <Route path="/stock-by-location" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","compliance_officer"]}><StockByLocation /></RoleGuard></Wrap>} />
+            <Route path="/sales-velocity" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","purchasing_manager"]}><SalesVelocity /></RoleGuard></Wrap>} />
+            <Route path="/waste" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","compliance_officer"]}><WasteReport /></RoleGuard></Wrap>} />
+            <Route path="/supplier-performance" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><SupplierPerformance /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

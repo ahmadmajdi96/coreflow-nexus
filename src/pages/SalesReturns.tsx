@@ -88,49 +88,69 @@ const SalesReturns = () => {
   const total = useMemo(() => lines.reduce((s, l) => s + l.qty * l.unit_price, 0), [lines]);
 
   const submitReturn = async () => {
+    if (submitting) return;
     if (!selectedTx) return toast.error("Select a sale");
     const items = lines.filter(l => l.qty > 0);
     if (!items.length) return toast.error("Enter at least one return quantity");
-    const overReturn = items.find(l => l.qty > l.max_qty);
-    if (overReturn) return toast.error(`Return qty exceeds remaining returnable for ${overReturn.product_name}`);
-    const expiredLine = items.find(l => l.expired);
-    if (expiredLine) return toast.error(`Cannot return to expired batch ${expiredLine.batch_number}`);
-    const noBatch = items.find(l => !l.batch_id);
-    if (noBatch) return toast.error(`Original sale line for ${noBatch.product_name} has no batch — cannot credit FEFO`);
+    setLineErrors({});
 
-    const code = `RET-${Date.now()}`;
-    const { data: ret, error } = await supabase.from("sales_returns").insert({
-      return_number: code, original_transaction_id: selectedTx.id,
-      reason: reason || null, total_amount: total, created_by: user?.id,
-    } as any).select().single();
-    if (error || !ret) return toast.error(error?.message || "Failed to create return");
-
-    const { error: itErr } = await supabase.from("sales_return_items").insert(
-      items.map(l => ({
-        return_id: ret.id, product_id: l.product_id, batch_id: l.batch_id,
-        quantity: l.qty, unit_price: l.unit_price, original_sales_item_id: l.sales_item_id,
-      }))
-    );
-    if (itErr) {
-      await supabase.from("sales_returns").delete().eq("id", ret.id);
-      return toast.error(`Return blocked: ${itErr.message}`);
+    // Pre-validation: build per-line errors
+    const errs: Record<string, { title: string; detail: string }> = {};
+    for (const l of items) {
+      if (l.qty > l.max_qty) errs[l.sales_item_id] = { title: "Quantity too high", detail: `Only ${l.max_qty} unit(s) of ${l.product_name} are still returnable.` };
+      else if (l.expired) errs[l.sales_item_id] = { title: "Batch expired", detail: `Batch ${l.batch_number} expired on ${l.expiry_date}. Cannot credit stock back.` };
+      else if (!l.batch_id) errs[l.sales_item_id] = { title: "No batch on original line", detail: `Original sale for ${l.product_name} has no batch — FEFO credit not possible.` };
+    }
+    if (Object.keys(errs).length) {
+      setLineErrors(errs);
+      return toast.error("Some lines need attention — see highlighted errors below.");
     }
 
-    await supabase.from("audit_log").insert({
-      entity_type: "sales_return", entity_id: ret.id, action: "RETURN_POSTED",
-      new_value: {
-        return_number: code, original_tx: selectedTx.transaction_id, total,
-        lines: items.map(l => ({
-          product_id: l.product_id, batch_id: l.batch_id, batch_number: l.batch_number,
-          qty: l.qty, unit_price: l.unit_price,
-        })),
-        reason,
-      },
-      user_id: user?.id,
-    });
+    setSubmitting(true);
+    try {
+      const code = `RET-${Date.now()}`;
+      const { data: ret, error } = await supabase.from("sales_returns").insert({
+        return_number: code, original_transaction_id: selectedTx.id,
+        reason: reason || null, total_amount: total, created_by: user?.id,
+      } as any).select().single();
+      if (error || !ret) { toast.error(error?.message || "Failed to create return"); return; }
 
-    toast.success(`Return ${code} posted · $${total.toFixed(2)} credited back to FEFO batches`);
-    setOpen(false); setSelectedTxId(""); setReason(""); setLines([]); reload();
+      const itemsPayload = items.map(l => ({
+        return_id: ret.id, product_id: l.product_id, batch_id: l.batch_id,
+        quantity: l.qty, unit_price: l.unit_price, original_sales_item_id: l.sales_item_id,
+      }));
+
+      const { error: itErr } = await supabase.from("sales_return_items").insert(itemsPayload);
+      if (itErr) {
+        await supabase.from("sales_returns").delete().eq("id", ret.id);
+        const parsed = parseFefoError(itErr.message);
+        // Attach error to first matching line if we can
+        const target = parsed.batch_number
+          ? items.find(l => l.batch_number === parsed.batch_number)
+          : items[0];
+        if (target) setLineErrors({ [target.sales_item_id]: { title: parsed.title, detail: parsed.detail } });
+        toast.error(`${parsed.title}: ${parsed.detail}`);
+        return;
+      }
+
+      await supabase.from("audit_log").insert({
+        entity_type: "sales_return", entity_id: ret.id, action: "RETURN_POSTED",
+        new_value: {
+          return_number: code, original_tx: selectedTx.transaction_id, total,
+          lines: items.map(l => ({
+            product_id: l.product_id, batch_id: l.batch_id, batch_number: l.batch_number,
+            qty: l.qty, unit_price: l.unit_price,
+          })),
+          reason,
+        },
+        user_id: user?.id,
+      });
+
+      toast.success(`Return ${code} posted · $${total.toFixed(2)} credited back to FEFO batches`);
+      setOpen(false); setSelectedTxId(""); setReason(""); setLines([]); setLineErrors({}); reload();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

@@ -409,14 +409,30 @@ const POs = () => {
                       <div><div className="text-muted-foreground">Budget After</div><div className={`text-lg font-bold tabular-nums ${wouldExceed ? "text-destructive" : "text-success"}`}>${(Number(rule?.budget_spent_mtd || 0) + Number(po.total_amount)).toLocaleString()}</div></div>
                     </div>
                     {po.notes && <p className="text-xs italic text-muted-foreground mt-3 p-2 bg-muted/40 rounded">{po.notes}</p>}
+                    {(() => {
+                      const issues = poHeaderIssues(po);
+                      if (!issues.length) return null;
+                      return (
+                        <div className="mt-3 p-2 rounded bg-destructive/10 border border-destructive/30 text-xs text-destructive">
+                          <div className="font-semibold flex items-center gap-1 mb-1"><ListChecks className="h-3 w-3" />Pre-submit checklist failed:</div>
+                          <ul className="list-disc list-inside space-y-0.5">{issues.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
                     {userCanApprove ? (
                       <>
-                        <Button size="sm" onClick={() => approve(po)} disabled={wouldExceed || isActing} className="bg-success hover:bg-success/90 text-success-foreground">
-                          {isActing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1.5" />}Approve
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setRejecting(po)} disabled={isActing} className="border-destructive/30 text-destructive hover:bg-destructive/10"><ThumbsDown className="h-4 w-4 mr-1.5" />Reject</Button>
+                        {(() => {
+                          const issues = poHeaderIssues(po);
+                          const blocked = wouldExceed || isActing || issues.length > 0;
+                          return <>
+                            <Button size="sm" onClick={() => approve(po)} disabled={blocked} className="bg-success hover:bg-success/90 text-success-foreground" title={issues.length ? issues.join("; ") : ""}>
+                              {isActing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1.5" />}Approve
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setRejecting(po)} disabled={isActing} className="border-destructive/30 text-destructive hover:bg-destructive/10"><ThumbsDown className="h-4 w-4 mr-1.5" />Reject</Button>
+                          </>;
+                        })()}
                       </>
                     ) : (
                       <p className="text-xs text-muted-foreground italic max-w-[180px] text-right">Requires {ap.label}</p>

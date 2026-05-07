@@ -605,7 +605,7 @@ const BudgetPanel = ({ rule, total, approval, overBudget, overBy, projectedSpent
   );
 };
 
-const PoDetailDialog = ({ po, onClose, onClone }: { po: any; onClose: () => void; onClone: (po: any) => void }) => {
+const PoDetailDialog = ({ po, rules, onClose, onClone }: { po: any; rules: Rule[]; onClose: () => void; onClone: (po: any) => void }) => {
   const [audit, setAudit] = useState<any[]>([]);
   useEffect(() => {
     if (!po) return;

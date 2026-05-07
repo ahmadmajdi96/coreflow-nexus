@@ -132,7 +132,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-auto" style={{ background: "var(--gradient-hero)" }}>
+      <main className="flex-1 min-w-0 ml-64 overflow-y-auto h-screen" style={{ background: "var(--gradient-hero)" }}>
         <div className="px-8 py-6 max-w-[1600px] mx-auto animate-fade-in">{children}</div>
       </main>
     </div>

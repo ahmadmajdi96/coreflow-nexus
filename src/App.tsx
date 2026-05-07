@@ -29,6 +29,7 @@ import SalesReturns from "./pages/SalesReturns";
 import SalesSettings from "./pages/SalesSettings";
 import SaleDetail from "./pages/SaleDetail";
 import FefoHealth from "./pages/FefoHealth";
+import Showcase from "./pages/Showcase";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -45,6 +46,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/showcase" element={<Showcase />} />
             <Route path="/" element={<Wrap><Dashboard /></Wrap>} />
             <Route path="/products" element={<Wrap><RoleGuard allowed={["inventory_manager"]}><Products /></RoleGuard></Wrap>} />
             <Route path="/suppliers" element={<Wrap><RoleGuard allowed={["purchasing_manager","system_admin"]}><Suppliers /></RoleGuard></Wrap>} />

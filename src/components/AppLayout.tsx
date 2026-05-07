@@ -62,7 +62,7 @@ const sections: NavSection[] = [
   },
 ];
 
-const _adminCleanup = null;
+
 
 const ROLE_LABEL: Record<string, string> = {
   system_admin: "Admin",

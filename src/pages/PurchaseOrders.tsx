@@ -890,16 +890,42 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
             {expCount > 0 && <> <span className="text-primary font-medium">{expCount} expiry-tracked line{expCount > 1 ? "s" : ""}</span> require valid batch and expiry data.</>}
           </p>
         </DialogHeader>
+
+        <Card className="p-3 bg-muted/30 flex items-center justify-between gap-3">
+          <div className="text-xs">
+            <div className="font-semibold flex items-center gap-1"><Upload className="h-3 w-3" />Import ASN (Advance Shipping Notice)</div>
+            <div className="text-muted-foreground">CSV/JSON with columns: <code>sku, batch_number, expiry_date, mfg_date</code>. Auto-fills matching lines.</div>
+            {asnReport && <div className="text-success mt-1">✓ {asnReport.matched}/{asnReport.total} rows matched · {asnReport.skipped} skipped (SKU not on PO)</div>}
+          </div>
+          <label className="shrink-0">
+            <input type="file" accept=".csv,.json,application/json,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importAsn(f); e.currentTarget.value = ""; }} />
+            <Button asChild variant="outline" size="sm" type="button"><span><Upload className="h-3.5 w-3.5 mr-1.5" />Upload ASN</span></Button>
+          </label>
+        </Card>
+
+        <Card className={`p-3 ${allComplete ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30"}`}>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 font-semibold">
+              <ListChecks className="h-3.5 w-3.5" />Pre-submit checklist · {completedCount}/{checklist.length} lines ready
+            </div>
+            {allComplete ? <CheckCircle2 className="h-4 w-4 text-success" /> : <AlertCircle className="h-4 w-4 text-warning" />}
+          </div>
+        </Card>
+
         <div className="space-y-3">
           {po.purchase_order_lines.map((l: any) => {
             const isExp = l.products.expiry_trackable;
             const b = batches[l.id] || {};
             const e = errors[l.id] || {};
+            const lineOk = checklist.find((c: any) => c.line.id === l.id)?.ok;
             return (
               <Card key={l.id} className={`p-4 transition-all ${isExp ? "border-l-4 border-l-primary" : ""} ${Object.keys(e).length ? "border-destructive/40 bg-destructive/5" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <div className="font-medium">{l.products.name} <span className="text-muted-foreground font-mono text-xs ml-2">{l.products.sku}</span></div>
+                    <div className="font-medium flex items-center gap-2">
+                      {lineOk ? <CheckCircle2 className="h-3.5 w-3.5 text-success" /> : <div className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground/40" />}
+                      {l.products.name} <span className="text-muted-foreground font-mono text-xs ml-1">{l.products.sku}</span>
+                    </div>
                     <div className="text-sm text-muted-foreground">Qty: {l.quantity} @ ${Number(l.unit_cost).toFixed(2)}</div>
                   </div>
                   {isExp && <Badge className="bg-primary/10 text-primary border-primary/30">Expiry Tracked</Badge>}
@@ -927,7 +953,7 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={acting}>Cancel</Button>
-          <Button onClick={submit} disabled={acting}>
+          <Button onClick={submit} disabled={acting || !allComplete} title={!allComplete ? "Complete all checklist items first" : ""}>
             {acting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}Submit Receipt
           </Button>
         </DialogFooter>

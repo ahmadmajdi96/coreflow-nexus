@@ -24,6 +24,7 @@ import StockByLocation from "./pages/StockByLocation";
 import SalesVelocity from "./pages/SalesVelocity";
 import WasteReport from "./pages/WasteReport";
 import SupplierPerformance from "./pages/SupplierPerformance";
+import Sales from "./pages/Sales";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 

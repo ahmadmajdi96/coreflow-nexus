@@ -33,25 +33,30 @@ const FefoHealth = () => {
 
   const runFiringTest = async () => {
     setTesting(true); setTestResult(null);
-    // Insert a sales_item with a non-existent batch_id; trigger MUST raise.
-    const fakeBatch = "00000000-0000-0000-0000-000000000000";
-    const { error } = await supabase.from("sales_items").insert({
-      transaction_id: fakeBatch, product_id: fakeBatch, batch_id: fakeBatch,
-      quantity: 1, unit_price: 0,
-    } as any);
+    const { data, error } = await (supabase as any).rpc("test_fefo_firing");
     setTesting(false);
-    if (!error) {
-      setTestResult({ ok: false, title: "Trigger did NOT fire",
-        detail: "Insert with a fake batch succeeded — the FEFO trigger may be missing or disabled." });
+    if (error) {
+      setTestResult({ ok: false, title: "Test failed to run", detail: error.message });
       return;
     }
-    const parsed = parseFefoError(error.message);
-    // We expect "Batch ... not found" → trigger is firing
-    if (/not found/i.test(error.message) || parsed.field === "batch") {
-      setTestResult({ ok: true, title: "Trigger fired correctly", detail: parsed.detail });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      setTestResult({ ok: false, title: "No result", detail: "RPC returned no rows." });
+      return;
+    }
+    if (row.fired) {
+      const parsed = parseFefoError(row.message ?? "");
+      setTestResult({
+        ok: true,
+        title: "Trigger fired correctly (test rolled back, no data written)",
+        detail: parsed.detail || row.message,
+      });
     } else {
-      setTestResult({ ok: false, title: "Insert blocked, but not by FEFO trigger",
-        detail: error.message });
+      setTestResult({
+        ok: false,
+        title: "Trigger did NOT fire",
+        detail: row.message || "Fake insert was not blocked — FEFO trigger may be missing or disabled.",
+      });
     }
   };
 

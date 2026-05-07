@@ -836,6 +836,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_fefo_triggers: {
+        Args: never
+        Returns: {
+          enabled: boolean
+          function_name: string
+          table_name: string
+          trigger_name: string
+        }[]
+      }
       current_user_has_any_role: { Args: never; Returns: boolean }
       has_role: {
         Args: {

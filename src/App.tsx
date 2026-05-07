@@ -26,6 +26,7 @@ import WasteReport from "./pages/WasteReport";
 import SupplierPerformance from "./pages/SupplierPerformance";
 import Sales from "./pages/Sales";
 import SalesReturns from "./pages/SalesReturns";
+import SalesSettings from "./pages/SalesSettings";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 

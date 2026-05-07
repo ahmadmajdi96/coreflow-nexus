@@ -241,8 +241,12 @@ const SalesReturns = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={submitReturn} disabled={!selectedTx || total <= 0}><Receipt className="h-4 w-4 mr-2" />Post Return</Button>
+                <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
+                <Button onClick={submitReturn} disabled={!selectedTx || total <= 0 || submitting}>
+                  {submitting
+                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Posting…</>
+                    : <><Receipt className="h-4 w-4 mr-2" />Post Return</>}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

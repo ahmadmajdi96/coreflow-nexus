@@ -70,6 +70,9 @@ const Sales = () => {
   const canApprove = hasRole("system_admin") || hasRole("cfo");
   const canManageSettings = canApprove;
 
+  const [submitting, setSubmitting] = useState<null | "post" | "approve-now">(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
   const reload = async () => {
     const [{ data: p }, { data: b }, { data: s }, { data: tx }, { data: st }] = await Promise.all([
       supabase.from("products").select("*").eq("active", true),

@@ -668,6 +668,45 @@ const PoDetailDialog = ({ po, rules, onClose, onClone }: { po: any; rules: Rule[
 
         {po.notes && <Card className="p-3 bg-muted/40 text-sm italic">{po.notes}</Card>}
 
+        {(() => {
+          const rule = rules.find(r => r.department === po.department);
+          const total = Number(po.total_amount);
+          const ap = resolveApproval(rule, total);
+          const allocated = Number(rule?.budget_allocated || 0);
+          const spent = Number(rule?.budget_spent_mtd || 0);
+          const projected = spent + total;
+          const overBy = allocated > 0 && projected > allocated ? projected - allocated : 0;
+          const issues = poHeaderIssues(po);
+          return (
+            <Card className={`p-4 border-2 ${overBy ? "border-destructive bg-destructive/5" : ap.level === "L3" ? "border-warning/40 bg-warning/5" : ap.level === "L2" ? "border-primary/30 bg-primary/5" : "border-success/30 bg-success/5"}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 font-semibold text-sm"><ShieldCheck className="h-4 w-4 text-primary" />Approval Breakdown</div>
+                <Badge variant="outline" className="font-mono">{ap.level} · {ap.label}</Badge>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div><div className="text-muted-foreground">Order Value</div><div className="text-base font-bold tabular-nums">${total.toLocaleString()}</div></div>
+                <div><div className="text-muted-foreground">L1 / L2 Thresholds</div><div className="text-sm font-medium tabular-nums">${Number(rule?.threshold_l1 || 0).toLocaleString()} / ${Number(rule?.threshold_l2 || 0).toLocaleString()}</div></div>
+                <div><div className="text-muted-foreground">Required Approver</div><div className="text-sm font-medium">{ap.requiredRole ? (ROLE_LABELS[ap.requiredRole] || ap.requiredRole) : "Auto-approved"}</div></div>
+                <div><div className="text-muted-foreground">Dept Budget Impact</div><div className={`text-sm font-bold tabular-nums ${overBy ? "text-destructive" : "text-success"}`}>{allocated ? `$${spent.toLocaleString()} → $${projected.toLocaleString()} / $${allocated.toLocaleString()}` : "No budget set"}</div></div>
+              </div>
+              {overBy > 0 && (
+                <div className="mt-2 p-2 rounded bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+                  <FileWarning className="h-3 w-3 inline mr-1" />Exceeds department budget by <span className="font-mono font-bold">${overBy.toFixed(2)}</span>.
+                </div>
+              )}
+              {issues.length > 0 && (
+                <div className="mt-2 p-2 rounded bg-warning/10 border border-warning/30 text-xs">
+                  <div className="font-semibold flex items-center gap-1 mb-1"><ListChecks className="h-3 w-3" />Pre-submit checklist ({issues.length} issue{issues.length > 1 ? "s" : ""}):</div>
+                  <ul className="list-disc list-inside space-y-0.5">{issues.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                </div>
+              )}
+              {issues.length === 0 && overBy === 0 && (
+                <div className="mt-2 text-xs text-success flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />All checklist items complete — ready for {ap.level === "L1" ? "auto-approval" : ap.label}.</div>
+              )}
+            </Card>
+          );
+        })()}
+
         <Separator />
 
         <div>

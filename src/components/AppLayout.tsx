@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Boxes, LayoutDashboard, Package, Layers, ShoppingCart, Tag, BarChart3,
   ShieldCheck, FileText, LogOut, Users, Calculator, FileBarChart2, Settings2,
-  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag,
+  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag, Undo2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +32,7 @@ const sections: NavSection[] = [
       { to: "/supplier-performance", label: "Supplier Performance", icon: Award },
       { to: "/markdowns", label: "Markdowns", icon: Tag },
       { to: "/sales", label: "Sales / POS", icon: ShoppingBag },
+      { to: "/sales-returns", label: "Sales Returns", icon: Undo2 },
     ],
   },
   {
@@ -69,8 +70,8 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   if (!user) return <Navigate to="/auth" state={{ from: location }} replace />;
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className="w-64 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col">
+    <div className="h-screen flex bg-background overflow-hidden">
+      <aside className="w-64 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col fixed inset-y-0 left-0 z-30">
         {/* Brand */}
         <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border">
           <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md" style={{ background: "var(--gradient-primary)" }}>
@@ -132,7 +133,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-auto" style={{ background: "var(--gradient-hero)" }}>
+      <main className="flex-1 min-w-0 ml-64 overflow-y-auto h-screen" style={{ background: "var(--gradient-hero)" }}>
         <div className="px-8 py-6 max-w-[1600px] mx-auto animate-fade-in">{children}</div>
       </main>
     </div>

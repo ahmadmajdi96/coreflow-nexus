@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: string
+          sales_approval_threshold: number
+          sell_by_buffer_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          sales_approval_threshold?: number
+          sell_by_buffer_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          sales_approval_threshold?: number
+          sell_by_buffer_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       approval_rules: {
         Row: {
           active: boolean
@@ -463,6 +487,7 @@ export type Database = {
           batch_id: string | null
           discount_applied: number
           id: string
+          line_note: string | null
           product_id: string | null
           quantity: number
           tax_amount: number
@@ -473,6 +498,7 @@ export type Database = {
           batch_id?: string | null
           discount_applied?: number
           id?: string
+          line_note?: string | null
           product_id?: string | null
           quantity: number
           tax_amount?: number
@@ -483,6 +509,7 @@ export type Database = {
           batch_id?: string | null
           discount_applied?: number
           id?: string
+          line_note?: string | null
           product_id?: string | null
           quantity?: number
           tax_amount?: number
@@ -513,27 +540,130 @@ export type Database = {
           },
         ]
       }
-      sales_transactions: {
+      sales_return_items: {
+        Row: {
+          batch_id: string | null
+          id: string
+          original_sales_item_id: string | null
+          product_id: string
+          quantity: number
+          return_id: string
+          unit_price: number
+        }
+        Insert: {
+          batch_id?: string | null
+          id?: string
+          original_sales_item_id?: string | null
+          product_id: string
+          quantity: number
+          return_id: string
+          unit_price?: number
+        }
+        Update: {
+          batch_id?: string | null
+          id?: string
+          original_sales_item_id?: string | null
+          product_id?: string
+          quantity?: number
+          return_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_return_items_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "sales_returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_returns: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
           occurred_at: string
+          original_transaction_id: string | null
+          reason: string | null
+          return_number: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          occurred_at?: string
+          original_transaction_id?: string | null
+          reason?: string | null
+          return_number: string
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          occurred_at?: string
+          original_transaction_id?: string | null
+          reason?: string | null
+          return_number?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_returns_original_transaction_id_fkey"
+            columns: ["original_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "sales_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_transactions: {
+        Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          occurred_at: string
+          payment_status: string
           store_id: string | null
           total_amount: number
           transaction_id: string
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
+          invoice_number?: string | null
+          notes?: string | null
           occurred_at?: string
+          payment_status?: string
           store_id?: string | null
           total_amount?: number
           transaction_id: string
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
+          invoice_number?: string | null
+          notes?: string | null
           occurred_at?: string
+          payment_status?: string
           store_id?: string | null
           total_amount?: number
           transaction_id?: string

@@ -421,7 +421,7 @@ const Sales = () => {
         createdAtKey="occurred_at"
         tableId="sales"
         columns={[
-          { key: "tx", header: "Transaction", accessor: (r: any) => r.transaction_id, sortable: true, cell: (r: any) => <span className="font-mono text-xs font-medium">{r.transaction_id}</span> },
+          { key: "tx", header: "Transaction", accessor: (r: any) => r.transaction_id, sortable: true, cell: (r: any) => <Link to={`/sales/${r.id}`} className="font-mono text-xs font-medium text-primary hover:underline">{r.transaction_id}</Link> },
           { key: "invoice", header: "Invoice", accessor: (r: any) => r.invoice_number ?? "", cell: (r: any) => <span className="text-xs">{r.invoice_number || "—"}</span> },
           { key: "customer", header: "Customer", accessor: (r: any) => r.customer_name ?? "", cell: (r: any) => <span className="text-xs">{r.customer_name || "—"}</span> },
           { key: "when", header: "Occurred", accessor: (r: any) => r.occurred_at, sortable: true, cell: (r: any) => format(new Date(r.occurred_at), "PPp") },

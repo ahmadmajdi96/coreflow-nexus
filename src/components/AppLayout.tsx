@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Boxes, LayoutDashboard, Package, Layers, ShoppingCart, Tag, BarChart3,
   ShieldCheck, FileText, LogOut, Users, Calculator, FileBarChart2, Settings2,
-  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award,
+  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

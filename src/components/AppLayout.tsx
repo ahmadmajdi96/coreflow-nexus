@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
   Boxes, LayoutDashboard, Package, Layers, ShoppingCart, Tag, BarChart3,
-  ShieldCheck, FileText, LogOut, Users, Calculator, FileBarChart2, Settings2
+  ShieldCheck, FileText, LogOut, Users, Calculator, FileBarChart2, Settings2,
+  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,8 @@ const sections: NavSection[] = [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       { to: "/products", label: "Products", icon: Package },
       { to: "/batches", label: "Batches", icon: Layers },
+      { to: "/movements", label: "Stock Movements", icon: ArrowLeftRight },
+      { to: "/stock-by-location", label: "Stock by Location", icon: MapPin },
     ],
   },
   {
@@ -25,6 +28,8 @@ const sections: NavSection[] = [
     items: [
       { to: "/suppliers", label: "Suppliers", icon: Users },
       { to: "/purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
+      { to: "/replenishment", label: "Replenishment", icon: RefreshCw },
+      { to: "/supplier-performance", label: "Supplier Performance", icon: Award },
       { to: "/markdowns", label: "Markdowns", icon: Tag },
     ],
   },
@@ -33,6 +38,8 @@ const sections: NavSection[] = [
     items: [
       { to: "/cfo", label: "CFO Dashboard", icon: BarChart3 },
       { to: "/valuation", label: "Inventory Valuation", icon: Calculator },
+      { to: "/sales-velocity", label: "Sales Velocity", icon: Zap },
+      { to: "/waste", label: "Waste & Shrinkage", icon: Trash2 },
       { to: "/compliance", label: "Compliance", icon: ShieldCheck },
       { to: "/audit", label: "Audit Log", icon: FileText },
     ],

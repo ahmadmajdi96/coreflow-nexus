@@ -87,15 +87,64 @@ const SaleDetail = () => {
     }] : []),
   ];
 
+  const buildExportRows = () => {
+    const timelineRows = steps.map((s) => [
+      "Timeline",
+      s.label,
+      s.failed ? "REJECTED" : s.done ? "DONE" : s.active ? "CURRENT" : "PENDING",
+      s.at ? format(new Date(s.at), "PPp") : "—",
+      s.by ?? "—",
+      "",
+    ]);
+    const auditRows = audit.map((a) => [
+      "Audit",
+      a.action,
+      "",
+      format(new Date(a.created_at), "PPp"),
+      a.user_id ? (profiles[a.user_id] || a.user_id.slice(0, 8)) : "—",
+      a.new_value ? JSON.stringify(a.new_value) : "",
+    ]);
+    return [...timelineRows, ...auditRows];
+  };
+
+  const handleExportCSV = () => {
+    exportToCSV(`sale-${tx.transaction_id}-audit.csv`,
+      ["Source", "Event", "Status", "When", "User", "Details"],
+      buildExportRows());
+  };
+  const handleExportPDF = () => {
+    exportToPDF({
+      title: `Sale ${tx.transaction_id} — Audit & Timeline`,
+      subtitle: tx.customer_name ? `Customer: ${tx.customer_name}` : undefined,
+      filename: `sale-${tx.transaction_id}-audit.pdf`,
+      headers: ["Source", "Event", "Status", "When", "User", "Details"],
+      rows: buildExportRows(),
+      meta: {
+        Invoice: tx.invoice_number || "—",
+        Payment: tx.payment_status,
+        Approval: tx.approval_status,
+        Total: `$${Number(tx.total_amount).toFixed(2)}`,
+      },
+    });
+  };
+
   return (
     <>
       <PageHeader
         title={`Sale ${tx.transaction_id}`}
         description={tx.customer_name ? `Customer: ${tx.customer_name}` : "Customer: —"}
         actions={
-          <Button asChild variant="outline">
-            <Link to="/sales"><ArrowLeft className="h-4 w-4 mr-2" />Back to Sales</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-2" />CSV
+            </Button>
+            <Button variant="outline" onClick={handleExportPDF}>
+              <FileText className="h-4 w-4 mr-2" />PDF
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/sales"><ArrowLeft className="h-4 w-4 mr-2" />Back</Link>
+            </Button>
+          </div>
         }
       />
 

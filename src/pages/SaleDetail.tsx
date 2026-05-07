@@ -5,8 +5,9 @@ import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingBag, CheckCircle2, Clock, XCircle, FileCheck2, User } from "lucide-react";
+import { ArrowLeft, ShoppingBag, CheckCircle2, Clock, XCircle, FileCheck2, User, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { exportToCSV, exportToPDF } from "@/lib/exporters";
 
 type Step = {
   key: "CREATED" | "PENDING" | "APPROVED" | "REJECTED" | "POSTED";

@@ -224,47 +224,54 @@ const Sales = () => {
   const approveSale = async (tx: any) => {
     if (!canApprove) return toast.error("You cannot approve sales");
     if (tx.approval_status !== "PENDING") return;
+    if (approvingId || rejectingId) return;
     const pending = (tx.pending_cart ?? []) as CartLine[];
     if (!pending.length) return toast.error("No pending cart attached to this sale");
-
-    // Re-allocate FEFO with current batch availability before posting
-    const { data: fresh } = await supabase.from("inventory_batches")
-      .select("*").eq("status", "AVAILABLE").gt("quantity_available", 0);
-    const reallocated = pending.map((l: CartLine) => allocateFEFO(l.product_id, l.qty, fresh ?? []));
-    if (reallocated.some(l => l.insufficient || !l.allocations.length)) {
-      return toast.error("Insufficient stock or expiry blocks at approval time. Reject and recreate.");
+    setApprovingId(tx.id);
+    try {
+      const { data: fresh } = await supabase.from("inventory_batches")
+        .select("*").eq("status", "AVAILABLE").gt("quantity_available", 0);
+      const reallocated = pending.map((l: CartLine) => allocateFEFO(l.product_id, l.qty, fresh ?? []));
+      if (reallocated.some(l => l.insufficient || !l.allocations.length)) {
+        toast.error("Insufficient stock or expiry blocks at approval time. Reject and recreate."); return;
+      }
+      const r = await postItems(tx.id, reallocated);
+      if (!r.ok) { toast.error(`Posting failed: ${r.error}`); return; }
+      const now = new Date().toISOString();
+      await supabase.from("sales_transactions").update({
+        approval_status: "APPROVED", approved_by: user?.id, approved_at: now,
+        posted_at: now, posted_by: user?.id, pending_cart: null,
+      } as any).eq("id", tx.id);
+      await supabase.from("audit_log").insert({
+        entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_APPROVED_AND_POSTED",
+        new_value: { transaction_id: tx.transaction_id, total: tx.total_amount }, user_id: user?.id,
+      });
+      toast.success(`Approved & posted ${tx.transaction_id}`);
+      reload();
+    } finally {
+      setApprovingId(null);
     }
-
-    const r = await postItems(tx.id, reallocated);
-    if (!r.ok) return toast.error(`Posting failed: ${r.error}`);
-
-    const now = new Date().toISOString();
-    await supabase.from("sales_transactions").update({
-      approval_status: "APPROVED", approved_by: user?.id, approved_at: now,
-      posted_at: now, posted_by: user?.id, pending_cart: null,
-    } as any).eq("id", tx.id);
-
-    await supabase.from("audit_log").insert({
-      entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_APPROVED_AND_POSTED",
-      new_value: { transaction_id: tx.transaction_id, total: tx.total_amount }, user_id: user?.id,
-    });
-    toast.success(`Approved & posted ${tx.transaction_id}`);
-    reload();
   };
 
   const rejectSale = async (tx: any) => {
     if (!canApprove) return;
-    const { error } = await supabase.from("sales_transactions").update({
-      approval_status: "REJECTED", approved_by: user?.id, approved_at: new Date().toISOString(),
-      pending_cart: null,
-    } as any).eq("id", tx.id);
-    if (error) return toast.error(error.message);
-    await supabase.from("audit_log").insert({
-      entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_REJECTED",
-      new_value: { transaction_id: tx.transaction_id }, user_id: user?.id,
-    });
-    toast.success(`Rejected ${tx.transaction_id}`);
-    reload();
+    if (approvingId || rejectingId) return;
+    setRejectingId(tx.id);
+    try {
+      const { error } = await supabase.from("sales_transactions").update({
+        approval_status: "REJECTED", approved_by: user?.id, approved_at: new Date().toISOString(),
+        pending_cart: null,
+      } as any).eq("id", tx.id);
+      if (error) { toast.error(error.message); return; }
+      await supabase.from("audit_log").insert({
+        entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_REJECTED",
+        new_value: { transaction_id: tx.transaction_id }, user_id: user?.id,
+      });
+      toast.success(`Rejected ${tx.transaction_id}`);
+      reload();
+    } finally {
+      setRejectingId(null);
+    }
   };
 
   return (

@@ -31,8 +31,15 @@ const sections: NavSection[] = [
       { to: "/replenishment", label: "Replenishment", icon: RefreshCw },
       { to: "/supplier-performance", label: "Supplier Performance", icon: Award },
       { to: "/markdowns", label: "Markdowns", icon: Tag },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
       { to: "/sales", label: "Sales / POS", icon: ShoppingBag },
       { to: "/sales-returns", label: "Sales Returns", icon: Undo2 },
+      { to: "/sales-settings", label: "Sales Settings", icon: Settings2 },
+      { to: "/fefo-health", label: "FEFO Health", icon: Activity },
     ],
   },
   {

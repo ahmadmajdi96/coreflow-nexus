@@ -190,13 +190,13 @@ const Sales = () => {
       notes: notes || null,
       pending_cart: willPostNow ? null : (cart as any),
     } as any).select().single();
-    if (error || !tx) return toast.error(error?.message || "Failed to create sale");
+    if (error || !tx) { toast.error(error?.message || "Failed to create sale"); return; }
 
     if (willPostNow) {
       const r = await postItems(tx.id, cart);
       if (!r.ok) {
         await supabase.from("sales_transactions").delete().eq("id", tx.id);
-        return toast.error(`Sale blocked: ${r.error}`);
+        toast.error(`Sale blocked: ${r.error}`); return;
       }
       await supabase.from("sales_transactions").update({
         posted_at: new Date().toISOString(), posted_by: user?.id,
@@ -216,6 +216,9 @@ const Sales = () => {
       ? `Sale ${txCode} posted · $${cartTotal.toFixed(2)}`
       : `Sale ${txCode} submitted — awaiting approval`);
     resetForm(); setOpen(false); reload();
+    } finally {
+      setSubmitting(null);
+    }
   };
 
   const approveSale = async (tx: any) => {

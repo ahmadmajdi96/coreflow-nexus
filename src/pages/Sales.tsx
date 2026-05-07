@@ -162,13 +162,19 @@ const Sales = () => {
     })));
     if (!items.length) return { ok: false, error: "No items to post" };
     const { error } = await supabase.from("sales_items").insert(items);
-    if (error) return { ok: false, error: error.message };
-    return { ok: true };
+    if (error) {
+      const p = parseFefoError(error.message);
+      return { ok: false, error: `${p.title}: ${p.detail}` };
+    }
+    return { ok: true as const };
   };
 
   const submitSale = async (autoApprove: boolean) => {
+    if (submitting) return;
     if (!cart.length) return toast.error("Cart is empty");
     if (hasBlockers) return toast.error("Resolve insufficient stock or expiry blocks before posting");
+    setSubmitting(autoApprove ? "approve-now" : "post");
+    try {
 
     const willPostNow = !requiresApproval || (autoApprove && canApprove);
     const approvalStatus = requiresApproval ? (willPostNow ? "APPROVED" : "PENDING") : "NOT_REQUIRED";

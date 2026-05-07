@@ -47,6 +47,21 @@ const resolveApproval = (rule: Rule | undefined, total: number) => {
   return { level: "L3" as const, requiredRole: rule.approver_l3_role, label: `${ROLE_LABELS[rule.approver_l3_role] || rule.approver_l3_role} (escalation)` };
 };
 
+const poHeaderIssues = (po: any): string[] => {
+  const issues: string[] = [];
+  if (!po.supplier_id) issues.push("Supplier missing");
+  if (!po.department) issues.push("Department missing");
+  if (!po.expected_date) issues.push("Expected date missing");
+  if (!po.purchase_order_lines?.length) issues.push("No line items");
+  (po.purchase_order_lines || []).forEach((l: any, i: number) => {
+    if (!l.product_id) issues.push(`Line ${i + 1}: product missing`);
+    if (!l.quantity || Number(l.quantity) <= 0) issues.push(`Line ${i + 1}: quantity must be > 0`);
+    if (Number(l.unit_cost) < 0) issues.push(`Line ${i + 1}: unit cost invalid`);
+  });
+  if (!Number(po.total_amount)) issues.push("Total is zero");
+  return issues;
+};
+
 const POs = () => {
   const { user, hasRole } = useAuth();
   const [pos, setPos] = useState<any[]>([]);

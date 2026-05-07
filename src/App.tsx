@@ -24,6 +24,7 @@ import StockByLocation from "./pages/StockByLocation";
 import SalesVelocity from "./pages/SalesVelocity";
 import WasteReport from "./pages/WasteReport";
 import SupplierPerformance from "./pages/SupplierPerformance";
+import Sales from "./pages/Sales";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/sales-velocity" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","purchasing_manager"]}><SalesVelocity /></RoleGuard></Wrap>} />
             <Route path="/waste" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","compliance_officer"]}><WasteReport /></RoleGuard></Wrap>} />
             <Route path="/supplier-performance" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><SupplierPerformance /></RoleGuard></Wrap>} />
+            <Route path="/sales" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo","system_admin"]}><Sales /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

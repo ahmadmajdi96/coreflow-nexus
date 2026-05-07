@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Boxes, LayoutDashboard, Package, Layers, ShoppingCart, Tag, BarChart3,
   ShieldCheck, FileText, LogOut, Users, Calculator, FileBarChart2, Settings2,
-  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award,
+  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,7 @@ const sections: NavSection[] = [
       { to: "/replenishment", label: "Replenishment", icon: RefreshCw },
       { to: "/supplier-performance", label: "Supplier Performance", icon: Award },
       { to: "/markdowns", label: "Markdowns", icon: Tag },
+      { to: "/sales", label: "Sales / POS", icon: ShoppingBag },
     ],
   },
   {

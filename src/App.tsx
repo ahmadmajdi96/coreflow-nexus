@@ -26,6 +26,7 @@ import WasteReport from "./pages/WasteReport";
 import SupplierPerformance from "./pages/SupplierPerformance";
 import Sales from "./pages/Sales";
 import SalesReturns from "./pages/SalesReturns";
+import SalesSettings from "./pages/SalesSettings";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/supplier-performance" element={<Wrap><RoleGuard allowed={["purchasing_manager","cfo"]}><SupplierPerformance /></RoleGuard></Wrap>} />
             <Route path="/sales" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo","system_admin"]}><Sales /></RoleGuard></Wrap>} />
             <Route path="/sales-returns" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","system_admin"]}><SalesReturns /></RoleGuard></Wrap>} />
+            <Route path="/sales-settings" element={<Wrap><RoleGuard allowed={["cfo","system_admin"]}><SalesSettings /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

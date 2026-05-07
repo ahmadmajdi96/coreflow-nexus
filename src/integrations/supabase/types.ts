@@ -490,6 +490,7 @@ export type Database = {
           line_note: string | null
           product_id: string | null
           quantity: number
+          quantity_returned: number
           tax_amount: number
           transaction_id: string
           unit_price: number
@@ -501,6 +502,7 @@ export type Database = {
           line_note?: string | null
           product_id?: string | null
           quantity: number
+          quantity_returned?: number
           tax_amount?: number
           transaction_id: string
           unit_price: number
@@ -512,6 +514,7 @@ export type Database = {
           line_note?: string | null
           product_id?: string | null
           quantity?: number
+          quantity_returned?: number
           tax_amount?: number
           transaction_id?: string
           unit_price?: number
@@ -632,6 +635,9 @@ export type Database = {
           notes: string | null
           occurred_at: string
           payment_status: string
+          pending_cart: Json | null
+          posted_at: string | null
+          posted_by: string | null
           store_id: string | null
           total_amount: number
           transaction_id: string
@@ -648,6 +654,9 @@ export type Database = {
           notes?: string | null
           occurred_at?: string
           payment_status?: string
+          pending_cart?: Json | null
+          posted_at?: string | null
+          posted_by?: string | null
           store_id?: string | null
           total_amount?: number
           transaction_id: string
@@ -664,6 +673,9 @@ export type Database = {
           notes?: string | null
           occurred_at?: string
           payment_status?: string
+          pending_cart?: Json | null
+          posted_at?: string | null
+          posted_by?: string | null
           store_id?: string | null
           total_amount?: number
           transaction_id?: string

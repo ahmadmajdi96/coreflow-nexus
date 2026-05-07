@@ -523,7 +523,7 @@ const POs = () => {
         </DialogContent>
       </Dialog>
 
-      <PoDetailDialog po={detailPo} onClose={() => setDetailPo(null)} onClone={clonePo} />
+      <PoDetailDialog po={detailPo} rules={rules} onClose={() => setDetailPo(null)} onClone={clonePo} />
     </>
   );
 };

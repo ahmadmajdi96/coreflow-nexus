@@ -469,8 +469,14 @@ const Sales = () => {
             key: "actions", header: "", accessor: () => "", exportable: false,
             cell: (r: any) => r.approval_status === "PENDING" && canApprove ? (
               <div className="flex gap-1 justify-end">
-                <Button size="sm" variant="outline" onClick={() => approveSale(r)} title="Approve & post"><Check className="h-3 w-3" /></Button>
-                <Button size="sm" variant="outline" onClick={() => rejectSale(r)} title="Reject"><X className="h-3 w-3" /></Button>
+                <Button size="sm" variant="outline" onClick={() => approveSale(r)}
+                  disabled={approvingId === r.id || rejectingId === r.id} title="Approve & post">
+                  {approvingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => rejectSale(r)}
+                  disabled={approvingId === r.id || rejectingId === r.id} title="Reject">
+                  {rejectingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                </Button>
               </div>
             ) : null,
             align: "right",

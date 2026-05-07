@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import {
   Plus, Trash2, Package, AlertCircle, CheckCircle2, XCircle, ThumbsUp, ThumbsDown,
   Wallet, FileWarning, Lock, Send, FileCheck, Edit3, Eye, Copy, Loader2,
-  Clock, FileDown, ListChecks, Truck, DollarSign, TrendingUp,
+  Clock, FileDown, ListChecks, Truck, DollarSign, TrendingUp, Upload, ShieldCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ReceiptStatusActions } from "@/components/ReceiptStatusActions";

@@ -790,6 +790,7 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
   const [batches, setBatches] = useState<Record<string, BatchEntry>>({});
   const [errors, setErrors] = useState<Record<string, ReceiptErrors>>({});
   const [touched, setTouched] = useState(false);
+  const [asnReport, setAsnReport] = useState<{ matched: number; skipped: number; total: number } | null>(null);
 
   if (!po) return null;
   const today = new Date().toISOString().slice(0, 10);
@@ -813,6 +814,46 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
     if (touched) setErrors({ ...errors, [lineId]: validateLine(lineId, isExp, next[lineId]) });
   };
 
+  const importAsn = async (file: File) => {
+    try {
+      const text = await file.text();
+      let rows: any[] = [];
+      if (file.name.toLowerCase().endsWith(".json")) {
+        const parsed = JSON.parse(text);
+        rows = Array.isArray(parsed) ? parsed : (parsed.lines || parsed.items || []);
+      } else {
+        // CSV: header row required
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (!lines.length) throw new Error("Empty file");
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        rows = lines.slice(1).map(ln => {
+          const cols = ln.split(",").map(c => c.trim());
+          const o: any = {};
+          headers.forEach((h, i) => o[h] = cols[i]);
+          return o;
+        });
+      }
+      const next = { ...batches };
+      let matched = 0, skipped = 0;
+      for (const row of rows) {
+        const sku = (row.sku || row.SKU || row.product_sku || "").toString().trim();
+        const line = po.purchase_order_lines.find((l: any) => l.products?.sku === sku);
+        if (!line) { skipped++; continue; }
+        next[line.id] = {
+          batch_number: (row.batch_number || row.batch || row.lot || "").toString().trim() || next[line.id]?.batch_number,
+          expiry_date: (row.expiry_date || row.expiry || row.exp || "").toString().trim() || next[line.id]?.expiry_date,
+          mfg_date: (row.mfg_date || row.mfg || row.manufactured || "").toString().trim() || next[line.id]?.mfg_date,
+        };
+        matched++;
+      }
+      setBatches(next);
+      setAsnReport({ matched, skipped, total: rows.length });
+      toast.success(`ASN imported: ${matched} matched, ${skipped} skipped`);
+    } catch (err: any) {
+      toast.error(`ASN parse failed: ${err.message}`);
+    }
+  };
+
   const submit = () => {
     setTouched(true);
     const allErrors: Record<string, ReceiptErrors> = {};
@@ -825,6 +866,16 @@ const ReceiveDialog = ({ po, onClose, onSubmit, acting }: any) => {
     if (hasErrors) return toast.error("Please fix the validation errors before submitting");
     onSubmit(po, batches);
   };
+
+  // Pre-submit checklist
+  const checklist = po.purchase_order_lines.map((l: any) => {
+    const b = batches[l.id] || {};
+    const isExp = l.products.expiry_trackable;
+    const e = validateLine(l.id, isExp, b);
+    return { line: l, ok: Object.keys(e).length === 0, isExp };
+  });
+  const completedCount = checklist.filter((c: any) => c.ok).length;
+  const allComplete = completedCount === checklist.length;
 
   const expCount = po.purchase_order_lines.filter((l: any) => l.products.expiry_trackable).length;
 

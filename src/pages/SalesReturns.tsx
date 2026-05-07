@@ -187,8 +187,9 @@ const SalesReturns = () => {
                     {lines.map((l, i) => {
                       const days = l.expiry_date ? differenceInDays(new Date(l.expiry_date), new Date()) : null;
                       const blocked = l.expired || l.max_qty <= 0;
+                      const err = lineErrors[l.sales_item_id];
                       return (
-                        <Card key={l.sales_item_id} className={`p-3 ${blocked ? "border-destructive/40 bg-destructive/5" : ""}`}>
+                        <Card key={l.sales_item_id} className={`p-3 ${err ? "border-destructive bg-destructive/10" : blocked ? "border-destructive/40 bg-destructive/5" : ""}`}>
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
                               <div className="text-sm font-medium">{l.product_name}</div>
@@ -213,10 +214,17 @@ const SalesReturns = () => {
                                   </span>
                                 )}
                               </div>
+                              {err && (
+                                <div className="mt-2 text-xs text-destructive flex items-start gap-1">
+                                  <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                                  <span><b>{err.title}</b> — {err.detail}</span>
+                                </div>
+                              )}
                             </div>
                             <div className="w-28">
                               <Label className="text-xs">Return qty</Label>
-                              <Input type="number" min={0} max={l.max_qty} value={l.qty} disabled={blocked}
+                              <Input type="number" min={0} max={l.max_qty} value={l.qty} disabled={blocked || submitting}
+                                className={err ? "border-destructive focus-visible:ring-destructive" : ""}
                                 onChange={e => setLines(arr => arr.map((x, j) => j === i ? { ...x, qty: Math.min(l.max_qty, Math.max(0, Number(e.target.value))) } : x))} />
                             </div>
                             <div className="w-24 text-right text-sm font-semibold tabular-nums">${(l.qty * l.unit_price).toFixed(2)}</div>

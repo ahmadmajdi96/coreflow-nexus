@@ -69,8 +69,8 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   if (!user) return <Navigate to="/auth" state={{ from: location }} replace />;
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className="w-64 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col">
+    <div className="h-screen flex bg-background overflow-hidden">
+      <aside className="w-64 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col fixed inset-y-0 left-0 z-30">
         {/* Brand */}
         <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border">
           <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md" style={{ background: "var(--gradient-primary)" }}>

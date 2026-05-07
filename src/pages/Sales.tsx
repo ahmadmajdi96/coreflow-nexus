@@ -392,14 +392,20 @@ const Sales = () => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={!!submitting}>Cancel</Button>
                   {requiresApproval && canApprove && (
-                    <Button variant="secondary" onClick={() => submitSale(true)} disabled={hasBlockers || cart.length === 0}>
-                      Approve & Post
+                    <Button variant="secondary" onClick={() => submitSale(true)}
+                      disabled={hasBlockers || cart.length === 0 || !!submitting}>
+                      {submitting === "approve-now"
+                        ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Posting…</>
+                        : "Approve & Post"}
                     </Button>
                   )}
-                  <Button onClick={() => submitSale(false)} disabled={hasBlockers || cart.length === 0}>
-                    {requiresApproval ? "Submit for Approval" : "Post Sale"}
+                  <Button onClick={() => submitSale(false)}
+                    disabled={hasBlockers || cart.length === 0 || !!submitting}>
+                    {submitting === "post"
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{requiresApproval ? "Submitting…" : "Posting…"}</>
+                      : (requiresApproval ? "Submit for Approval" : "Post Sale")}
                   </Button>
                 </DialogFooter>
               </DialogContent>

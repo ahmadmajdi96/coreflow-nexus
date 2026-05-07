@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Boxes, LayoutDashboard, Package, Layers, ShoppingCart, Tag, BarChart3,
   ShieldCheck, FileText, LogOut, Users, Calculator, FileBarChart2, Settings2,
-  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag, Undo2,
+  ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag, Undo2, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,8 +31,15 @@ const sections: NavSection[] = [
       { to: "/replenishment", label: "Replenishment", icon: RefreshCw },
       { to: "/supplier-performance", label: "Supplier Performance", icon: Award },
       { to: "/markdowns", label: "Markdowns", icon: Tag },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
       { to: "/sales", label: "Sales / POS", icon: ShoppingBag },
       { to: "/sales-returns", label: "Sales Returns", icon: Undo2 },
+      { to: "/sales-settings", label: "Sales Settings", icon: Settings2 },
+      { to: "/fefo-health", label: "FEFO Health", icon: Activity },
     ],
   },
   {
@@ -50,11 +57,12 @@ const sections: NavSection[] = [
     label: "Administration",
     items: [
       { to: "/approval-rules", label: "Approval Rules", icon: Settings2 },
-      { to: "/sales-settings", label: "Sales Settings", icon: Settings2 },
       { to: "/users", label: "Users & Roles", icon: Users, adminOnly: true },
     ],
   },
 ];
+
+
 
 const ROLE_LABEL: Record<string, string> = {
   system_admin: "Admin",

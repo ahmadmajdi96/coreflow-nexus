@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { parseFefoError } from "@/lib/fefoErrors";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -68,6 +70,9 @@ const Sales = () => {
   const canApprove = hasRole("system_admin") || hasRole("cfo");
   const canManageSettings = canApprove;
 
+  const [submitting, setSubmitting] = useState<null | "post" | "approve-now">(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
   const reload = async () => {
     const [{ data: p }, { data: b }, { data: s }, { data: tx }, { data: st }] = await Promise.all([
       supabase.from("products").select("*").eq("active", true),
@@ -157,13 +162,19 @@ const Sales = () => {
     })));
     if (!items.length) return { ok: false, error: "No items to post" };
     const { error } = await supabase.from("sales_items").insert(items);
-    if (error) return { ok: false, error: error.message };
-    return { ok: true };
+    if (error) {
+      const p = parseFefoError(error.message);
+      return { ok: false, error: `${p.title}: ${p.detail}` };
+    }
+    return { ok: true as const };
   };
 
   const submitSale = async (autoApprove: boolean) => {
+    if (submitting) return;
     if (!cart.length) return toast.error("Cart is empty");
     if (hasBlockers) return toast.error("Resolve insufficient stock or expiry blocks before posting");
+    setSubmitting(autoApprove ? "approve-now" : "post");
+    try {
 
     const willPostNow = !requiresApproval || (autoApprove && canApprove);
     const approvalStatus = requiresApproval ? (willPostNow ? "APPROVED" : "PENDING") : "NOT_REQUIRED";
@@ -179,13 +190,13 @@ const Sales = () => {
       notes: notes || null,
       pending_cart: willPostNow ? null : (cart as any),
     } as any).select().single();
-    if (error || !tx) return toast.error(error?.message || "Failed to create sale");
+    if (error || !tx) { toast.error(error?.message || "Failed to create sale"); return; }
 
     if (willPostNow) {
       const r = await postItems(tx.id, cart);
       if (!r.ok) {
         await supabase.from("sales_transactions").delete().eq("id", tx.id);
-        return toast.error(`Sale blocked: ${r.error}`);
+        toast.error(`Sale blocked: ${r.error}`); return;
       }
       await supabase.from("sales_transactions").update({
         posted_at: new Date().toISOString(), posted_by: user?.id,
@@ -205,52 +216,62 @@ const Sales = () => {
       ? `Sale ${txCode} posted · $${cartTotal.toFixed(2)}`
       : `Sale ${txCode} submitted — awaiting approval`);
     resetForm(); setOpen(false); reload();
+    } finally {
+      setSubmitting(null);
+    }
   };
 
   const approveSale = async (tx: any) => {
     if (!canApprove) return toast.error("You cannot approve sales");
     if (tx.approval_status !== "PENDING") return;
+    if (approvingId || rejectingId) return;
     const pending = (tx.pending_cart ?? []) as CartLine[];
     if (!pending.length) return toast.error("No pending cart attached to this sale");
-
-    // Re-allocate FEFO with current batch availability before posting
-    const { data: fresh } = await supabase.from("inventory_batches")
-      .select("*").eq("status", "AVAILABLE").gt("quantity_available", 0);
-    const reallocated = pending.map((l: CartLine) => allocateFEFO(l.product_id, l.qty, fresh ?? []));
-    if (reallocated.some(l => l.insufficient || !l.allocations.length)) {
-      return toast.error("Insufficient stock or expiry blocks at approval time. Reject and recreate.");
+    setApprovingId(tx.id);
+    try {
+      const { data: fresh } = await supabase.from("inventory_batches")
+        .select("*").eq("status", "AVAILABLE").gt("quantity_available", 0);
+      const reallocated = pending.map((l: CartLine) => allocateFEFO(l.product_id, l.qty, fresh ?? []));
+      if (reallocated.some(l => l.insufficient || !l.allocations.length)) {
+        toast.error("Insufficient stock or expiry blocks at approval time. Reject and recreate."); return;
+      }
+      const r = await postItems(tx.id, reallocated);
+      if (!r.ok) { toast.error(`Posting failed: ${r.error}`); return; }
+      const now = new Date().toISOString();
+      await supabase.from("sales_transactions").update({
+        approval_status: "APPROVED", approved_by: user?.id, approved_at: now,
+        posted_at: now, posted_by: user?.id, pending_cart: null,
+      } as any).eq("id", tx.id);
+      await supabase.from("audit_log").insert({
+        entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_APPROVED_AND_POSTED",
+        new_value: { transaction_id: tx.transaction_id, total: tx.total_amount }, user_id: user?.id,
+      });
+      toast.success(`Approved & posted ${tx.transaction_id}`);
+      reload();
+    } finally {
+      setApprovingId(null);
     }
-
-    const r = await postItems(tx.id, reallocated);
-    if (!r.ok) return toast.error(`Posting failed: ${r.error}`);
-
-    const now = new Date().toISOString();
-    await supabase.from("sales_transactions").update({
-      approval_status: "APPROVED", approved_by: user?.id, approved_at: now,
-      posted_at: now, posted_by: user?.id, pending_cart: null,
-    } as any).eq("id", tx.id);
-
-    await supabase.from("audit_log").insert({
-      entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_APPROVED_AND_POSTED",
-      new_value: { transaction_id: tx.transaction_id, total: tx.total_amount }, user_id: user?.id,
-    });
-    toast.success(`Approved & posted ${tx.transaction_id}`);
-    reload();
   };
 
   const rejectSale = async (tx: any) => {
     if (!canApprove) return;
-    const { error } = await supabase.from("sales_transactions").update({
-      approval_status: "REJECTED", approved_by: user?.id, approved_at: new Date().toISOString(),
-      pending_cart: null,
-    } as any).eq("id", tx.id);
-    if (error) return toast.error(error.message);
-    await supabase.from("audit_log").insert({
-      entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_REJECTED",
-      new_value: { transaction_id: tx.transaction_id }, user_id: user?.id,
-    });
-    toast.success(`Rejected ${tx.transaction_id}`);
-    reload();
+    if (approvingId || rejectingId) return;
+    setRejectingId(tx.id);
+    try {
+      const { error } = await supabase.from("sales_transactions").update({
+        approval_status: "REJECTED", approved_by: user?.id, approved_at: new Date().toISOString(),
+        pending_cart: null,
+      } as any).eq("id", tx.id);
+      if (error) { toast.error(error.message); return; }
+      await supabase.from("audit_log").insert({
+        entity_type: "sales_transaction", entity_id: tx.id, action: "SALE_REJECTED",
+        new_value: { transaction_id: tx.transaction_id }, user_id: user?.id,
+      });
+      toast.success(`Rejected ${tx.transaction_id}`);
+      reload();
+    } finally {
+      setRejectingId(null);
+    }
   };
 
   return (
@@ -371,14 +392,20 @@ const Sales = () => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={!!submitting}>Cancel</Button>
                   {requiresApproval && canApprove && (
-                    <Button variant="secondary" onClick={() => submitSale(true)} disabled={hasBlockers || cart.length === 0}>
-                      Approve & Post
+                    <Button variant="secondary" onClick={() => submitSale(true)}
+                      disabled={hasBlockers || cart.length === 0 || !!submitting}>
+                      {submitting === "approve-now"
+                        ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Posting…</>
+                        : "Approve & Post"}
                     </Button>
                   )}
-                  <Button onClick={() => submitSale(false)} disabled={hasBlockers || cart.length === 0}>
-                    {requiresApproval ? "Submit for Approval" : "Post Sale"}
+                  <Button onClick={() => submitSale(false)}
+                    disabled={hasBlockers || cart.length === 0 || !!submitting}>
+                    {submitting === "post"
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{requiresApproval ? "Submitting…" : "Posting…"}</>
+                      : (requiresApproval ? "Submit for Approval" : "Post Sale")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -394,7 +421,7 @@ const Sales = () => {
         createdAtKey="occurred_at"
         tableId="sales"
         columns={[
-          { key: "tx", header: "Transaction", accessor: (r: any) => r.transaction_id, sortable: true, cell: (r: any) => <span className="font-mono text-xs font-medium">{r.transaction_id}</span> },
+          { key: "tx", header: "Transaction", accessor: (r: any) => r.transaction_id, sortable: true, cell: (r: any) => <Link to={`/sales/${r.id}`} className="font-mono text-xs font-medium text-primary hover:underline">{r.transaction_id}</Link> },
           { key: "invoice", header: "Invoice", accessor: (r: any) => r.invoice_number ?? "", cell: (r: any) => <span className="text-xs">{r.invoice_number || "—"}</span> },
           { key: "customer", header: "Customer", accessor: (r: any) => r.customer_name ?? "", cell: (r: any) => <span className="text-xs">{r.customer_name || "—"}</span> },
           { key: "when", header: "Occurred", accessor: (r: any) => r.occurred_at, sortable: true, cell: (r: any) => format(new Date(r.occurred_at), "PPp") },
@@ -442,8 +469,14 @@ const Sales = () => {
             key: "actions", header: "", accessor: () => "", exportable: false,
             cell: (r: any) => r.approval_status === "PENDING" && canApprove ? (
               <div className="flex gap-1 justify-end">
-                <Button size="sm" variant="outline" onClick={() => approveSale(r)} title="Approve & post"><Check className="h-3 w-3" /></Button>
-                <Button size="sm" variant="outline" onClick={() => rejectSale(r)} title="Reject"><X className="h-3 w-3" /></Button>
+                <Button size="sm" variant="outline" onClick={() => approveSale(r)}
+                  disabled={approvingId === r.id || rejectingId === r.id} title="Approve & post">
+                  {approvingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => rejectSale(r)}
+                  disabled={approvingId === r.id || rejectingId === r.id} title="Reject">
+                  {rejectingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                </Button>
               </div>
             ) : null,
             align: "right",

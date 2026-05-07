@@ -27,6 +27,8 @@ import SupplierPerformance from "./pages/SupplierPerformance";
 import Sales from "./pages/Sales";
 import SalesReturns from "./pages/SalesReturns";
 import SalesSettings from "./pages/SalesSettings";
+import SaleDetail from "./pages/SaleDetail";
+import FefoHealth from "./pages/FefoHealth";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -64,6 +66,8 @@ const App = () => (
             <Route path="/sales" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo","system_admin"]}><Sales /></RoleGuard></Wrap>} />
             <Route path="/sales-returns" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","system_admin"]}><SalesReturns /></RoleGuard></Wrap>} />
             <Route path="/sales-settings" element={<Wrap><RoleGuard allowed={["cfo","system_admin"]}><SalesSettings /></RoleGuard></Wrap>} />
+            <Route path="/sales/:id" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo","system_admin"]}><SaleDetail /></RoleGuard></Wrap>} />
+            <Route path="/fefo-health" element={<Wrap><RoleGuard allowed={["inventory_manager","cfo","system_admin","compliance_officer"]}><FefoHealth /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

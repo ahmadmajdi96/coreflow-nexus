@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Undo2, Receipt, AlertTriangle, Clock } from "lucide-react";
+import { Undo2, Receipt, AlertTriangle, Clock, Loader2 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { parseFefoError } from "@/lib/fefoErrors";
 import { DataTable } from "@/components/DataTable";
 import { useAuth } from "@/hooks/useAuth";
 

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, FileText, RefreshCw, AlertTriangle, TrendingUp } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exporters";
+import AiInsightsPanel from "@/components/AiInsightsPanel";
 
 type Status = "all" | "out_of_stock" | "below_reorder" | "reorder_soon" | "healthy";
 
@@ -103,6 +104,10 @@ const Replenishment = () => {
           </>
         }
       />
+
+      <div className="mb-5">
+        <AiInsightsPanel kind="replenishment" title="AI Replenishment Brief" />
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <div className="stat-card"><div className="stat-label">Out of stock</div><div className="stat-value mt-2 text-destructive">{totals.out}</div></div>

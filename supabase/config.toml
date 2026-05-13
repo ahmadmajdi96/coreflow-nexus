@@ -2,3 +2,9 @@ project_id = "dijdhvewjozrycjqwoqs"
 
 [functions.generate-description]
 verify_jwt = false
+
+[functions.ai-copilot]
+verify_jwt = true
+
+[functions.ai-insights]
+verify_jwt = true

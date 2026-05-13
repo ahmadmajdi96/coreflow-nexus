@@ -105,6 +105,10 @@ const Replenishment = () => {
         }
       />
 
+      <div className="mb-5">
+        <AiInsightsPanel kind="replenishment" title="AI Replenishment Brief" />
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <div className="stat-card"><div className="stat-label">Out of stock</div><div className="stat-value mt-2 text-destructive">{totals.out}</div></div>
         <div className="stat-card"><div className="stat-label">Below reorder</div><div className="stat-value mt-2 text-warning">{totals.below}</div></div>

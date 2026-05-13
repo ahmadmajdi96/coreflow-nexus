@@ -4,6 +4,7 @@ import { parseFefoError } from "@/lib/fefoErrors";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/PageHeader";
+import AiInsightsPanel from "@/components/AiInsightsPanel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

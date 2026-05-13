@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Layers, ShoppingCart, Tag, AlertTriangle, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import AiInsightsPanel from "@/components/AiInsightsPanel";
 
 interface Stat { label: string; value: string | number; icon: any; tone?: string }
 

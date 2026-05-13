@@ -1,38 +1,39 @@
-import { TrendingUp, Clock, ShieldCheck, Eye, Layers, Wifi, BarChart3, Lock, Zap, Globe } from "lucide-react";
+import {
+  TrendingUp, Clock, ShieldCheck, Eye, Layers, Wifi,
+  BarChart3, Lock, Zap, Globe,
+} from "lucide-react";
+import { BenefitImpactCard, type BenefitStatement } from "./ImpactCard";
 
-const benefits = [
-  { icon: TrendingUp, title: "Increase OEE by 15–25%", description: "Real-time visibility into availability, performance, and quality losses." },
-  { icon: Clock, title: "Reduce Downtime by 30%", description: "Predictive maintenance alerts and automated work orders keep lines running." },
-  { icon: ShieldCheck, title: "Audit-Ready in Minutes", description: "Pre-assembled evidence packages with clause mapping for BRCGS, SQF, FSSC 22000." },
-  { icon: Eye, title: "100% Traceability", description: "End-to-end lot genealogy with one-click mock recalls in under 2 hours." },
-  { icon: Layers, title: "Unified Data Model", description: "MES, QMS, and CMS share a common data backbone." },
-  { icon: Wifi, title: "Edge-First Architecture", description: "Tablet apps for the factory floor work offline and sync when connected." },
-  { icon: BarChart3, title: "Actionable Analytics", description: "SPC, Pareto, trend analysis, and automated shift reports." },
-  { icon: Lock, title: "Role-Based Access", description: "Operators, technicians, managers, and auditors see exactly what they need." },
-  { icon: Zap, title: "Rapid Deployment", description: "Modular architecture — start with MES and add QMS and CMS as you grow." },
-  { icon: Globe, title: "Multi-Site Ready", description: "Centralized compliance monitoring across all facilities." },
+const benefits: BenefitStatement[] = [
+  { icon: TrendingUp, title: "OEE up 15–25%", description: "Real-time visibility into availability, performance and quality losses surfaces the biggest bottlenecks first.", colorVar: "--mes-color" },
+  { icon: Clock, title: "Downtime down 30%", description: "Predictive maintenance alerts and automated work orders keep lines running and crews ahead of failures.", colorVar: "--mes-color" },
+  { icon: ShieldCheck, title: "Audit-ready in minutes", description: "Pre-assembled evidence packages with clause mapping for BRCGS, SQF and FSSC 22000 — auditors approve, not interrogate.", colorVar: "--qms-color" },
+  { icon: Eye, title: "100% traceability", description: "End-to-end lot genealogy with one-click mock recalls in under 2 hours — forward and backward in seconds.", colorVar: "--qms-color" },
+  { icon: Layers, title: "Unified data model", description: "MES, QMS and CMS share one production backbone — no swivel-chair, no duplicate masters.", colorVar: "--mes-color" },
+  { icon: Wifi, title: "Edge-first architecture", description: "Tablet apps for the floor work offline and sync when connected — built for rugged environments.", colorVar: "--edge-color" },
+  { icon: BarChart3, title: "Actionable analytics", description: "SPC, Pareto, trend analysis and automated shift reports — every KPI drillable to source.", colorVar: "--ai-color" },
+  { icon: Lock, title: "Role-based access", description: "Operators, technicians, managers, CFOs and auditors see exactly what they need — masked, scoped and signed.", colorVar: "--cms-color" },
+  { icon: Zap, title: "AI everywhere", description: "Copilot for shift reports, CAPA narratives, label compliance and anomaly detection in one platform.", colorVar: "--ai-color" },
+  { icon: Globe, title: "Multi-site ready", description: "Centralized compliance and KPI roll-ups across plants, lines and legal entities.", colorVar: "--cms-color" },
 ];
 
 const BenefitsSection = () => (
-  <section className="py-16 sm:py-24 px-4 sm:px-6 relative">
-    <div className="absolute inset-0 sc-hero-gradient opacity-50" />
+  <section id="benefits" className="py-16 sm:py-24 px-4 sm:px-6 relative scroll-mt-20">
+    <div className="absolute inset-0 pp-hero-gradient opacity-50" />
     <div className="relative max-w-7xl mx-auto">
       <div className="text-center mb-16">
-        <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Why <span className="sc-gradient-text">CORTA-PL</span>?</h2>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">Measurable impact on your production line KPIs from day one.</p>
+        <h2 className="section-title mb-4">
+          Why <span className="pp-gradient-text">CORTA-PL</span>?
+        </h2>
+        <p className="section-subtitle mx-auto">
+          Measurable impact on your line KPIs, your audit posture and your compliance
+          spend — from day one.
+        </p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {benefits.map((b) => (
-          <div key={b.title} className="sc-benefit-card">
-            <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 w-fit mb-4">
-              <b.icon className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="font-semibold mb-2 text-sm">{b.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">{b.description}</p>
-          </div>
-        ))}
-      </div>
+
+      <BenefitImpactCard items={benefits} />
     </div>
   </section>
 );
+
 export default BenefitsSection;

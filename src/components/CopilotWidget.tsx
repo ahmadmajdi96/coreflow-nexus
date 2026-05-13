@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Bot, Send, Loader2, Sparkles, X, User } from "lucide-react";
+import { Bot, Send, Loader2, Sparkles, X, User, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-interface Msg { role: "user" | "assistant"; content: string }
+interface Msg { role: "user" | "assistant"; content: string; rating?: -1 | 1 }
 
 const SUGGESTIONS = [
   "What should I reorder this week?",
@@ -47,15 +47,21 @@ const CopilotWidget = () => {
     }
   };
 
+  const rate = async (idx: number, rating: -1 | 1) => {
+    const answer = messages[idx];
+    const question = [...messages].slice(0, idx).reverse().find((m) => m.role === "user")?.content ?? "";
+    setMessages((m) => m.map((mm, i) => (i === idx ? { ...mm, rating } : mm)));
+    const { error } = await supabase.from("copilot_feedback").insert({
+      user_id: user.id, rating, question, answer: answer.content, message_index: idx,
+    });
+    if (error) toast.error("Failed to record feedback");
+    else toast.success(rating === 1 ? "Thanks for the 👍" : "Thanks — we'll learn from this");
+  };
+
   return (
     <>
       {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full text-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
-          style={{ background: "var(--gradient-primary)" }}
-          aria-label="Open AI Copilot"
-        >
+        <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full text-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform" style={{ background: "var(--gradient-primary)" }} aria-label="Open AI Copilot">
           <Sparkles className="h-6 w-6" />
         </button>
       )}
@@ -88,8 +94,21 @@ const CopilotWidget = () => {
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${m.role === "user" ? "bg-secondary" : "bg-primary/15 text-primary"}`}>
                   {m.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                 </div>
-                <div className={`max-w-[85%] p-2.5 rounded-lg text-sm leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-primary/10 border border-primary/20" : "bg-secondary/40 border border-border"}`}>
-                  {m.content}
+                <div className="max-w-[85%] flex flex-col gap-1">
+                  <div className={`p-2.5 rounded-lg text-sm leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-primary/10 border border-primary/20" : "bg-secondary/40 border border-border"}`}>
+                    {m.content}
+                  </div>
+                  {m.role === "assistant" && (
+                    <div className="flex items-center gap-1 px-1">
+                      <button onClick={() => rate(i, 1)} disabled={m.rating !== undefined} className={`h-6 w-6 rounded-md flex items-center justify-center transition-colors ${m.rating === 1 ? "bg-success/20 text-success" : "text-muted-foreground hover:text-success hover:bg-success/10"} disabled:cursor-default`} aria-label="Helpful">
+                        <ThumbsUp className="h-3 w-3" />
+                      </button>
+                      <button onClick={() => rate(i, -1)} disabled={m.rating !== undefined} className={`h-6 w-6 rounded-md flex items-center justify-center transition-colors ${m.rating === -1 ? "bg-destructive/20 text-destructive" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"} disabled:cursor-default`} aria-label="Not helpful">
+                        <ThumbsDown className="h-3 w-3" />
+                      </button>
+                      {m.rating !== undefined && <span className="text-[10px] text-muted-foreground ml-1">Feedback recorded</span>}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -102,15 +121,8 @@ const CopilotWidget = () => {
           </div>
 
           <div className="p-3 border-t border-border flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask the Copilot…"
-              rows={1}
-              className="resize-none min-h-[40px] max-h-32 text-sm"
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-              disabled={loading}
-            />
+            <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask the Copilot…" rows={1} className="resize-none min-h-[40px] max-h-32 text-sm"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }} disabled={loading} />
             <Button size="icon" onClick={() => send(input)} disabled={loading || !input.trim()}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>

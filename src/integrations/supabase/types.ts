@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_brief_subscriptions: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_daily_briefs: {
+        Row: {
+          actions: Json
+          audience_role: string
+          brief_date: string
+          context: Json | null
+          created_at: string
+          headline: string | null
+          id: string
+          insights: Json
+          links: Json
+        }
+        Insert: {
+          actions?: Json
+          audience_role?: string
+          brief_date: string
+          context?: Json | null
+          created_at?: string
+          headline?: string | null
+          id?: string
+          insights?: Json
+          links?: Json
+        }
+        Update: {
+          actions?: Json
+          audience_role?: string
+          brief_date?: string
+          context?: Json | null
+          created_at?: string
+          headline?: string | null
+          id?: string
+          insights?: Json
+          links?: Json
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -131,6 +191,39 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      copilot_feedback: {
+        Row: {
+          answer: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          message_index: number | null
+          question: string | null
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          message_index?: number | null
+          question?: string | null
+          rating: number
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          message_index?: number | null
+          question?: string | null
+          rating?: number
+          user_id?: string
         }
         Relationships: []
       }

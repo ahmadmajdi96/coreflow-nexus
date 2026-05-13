@@ -1,5 +1,4 @@
-// AI Copilot — chat assistant with read-only tools over the ERP data.
-// Uses Lovable AI Gateway (OpenAI-compatible) with function/tool calling.
+// AI Copilot — chat assistant with read-only tools, role-scoped per user.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -7,94 +6,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are CoreERP Copilot, an in-app assistant for an enterprise inventory & sales ERP.
-You help managers, buyers, and the CFO answer questions about products, inventory batches (with FEFO/expiry),
-purchase orders, sales transactions, returns, suppliers, replenishment, and audit activity.
+type Role = "inventory_manager" | "purchasing_manager" | "cfo" | "compliance_officer" | "system_admin";
 
-Rules:
-- Always call tools to fetch live data before answering numerical or list questions. Never invent SKUs, IDs, or counts.
-- Be concise. Use short paragraphs and bullet lists. Format money as $X.XX and dates as YYYY-MM-DD.
-- When the user asks "what should I reorder?", call get_replenishment_suggestions.
-- When asked about expiring stock, call get_expiring_batches.
-- When asked about sales trends or recent transactions, call get_sales_summary or list_sales.
-- When asked about pending POs / approvals, call list_purchase_orders.
-- If a tool returns nothing, say so plainly — do not fabricate.
-- You do NOT have write access. If the user asks to create/modify/approve, tell them which page to use.`;
+// Tool → allowed roles. system_admin always allowed.
+const TOOL_ROLES: Record<string, Role[]> = {
+  get_dashboard_kpis: ["inventory_manager", "purchasing_manager", "cfo", "compliance_officer"],
+  get_expiring_batches: ["inventory_manager", "compliance_officer", "cfo"],
+  get_replenishment_suggestions: ["inventory_manager", "purchasing_manager", "cfo"],
+  list_purchase_orders: ["purchasing_manager", "cfo", "compliance_officer"],
+  list_sales: ["cfo", "compliance_officer", "inventory_manager"],
+  get_sales_summary: ["cfo", "inventory_manager", "purchasing_manager"],
+  search_products: ["inventory_manager", "purchasing_manager", "cfo", "compliance_officer"],
+  get_fefo_health: ["compliance_officer", "cfo"],
+};
 
-const tools = [
-  {
-    type: "function",
-    function: {
-      name: "get_dashboard_kpis",
-      description: "Get top-level KPIs: product count, batch count, open POs, active markdowns, near-expiry batches, today's sales total.",
-      parameters: { type: "object", properties: {} },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_expiring_batches",
-      description: "List inventory batches expiring within N days (default 30). Returns SKU, batch number, expiry, qty available.",
-      parameters: {
-        type: "object",
-        properties: { days: { type: "number", description: "Days ahead to check (default 30)" }, limit: { type: "number" } },
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_replenishment_suggestions",
-      description: "Compute products that should be reordered: on-hand below reorder point or low days-of-cover based on 30-day velocity.",
-      parameters: { type: "object", properties: { limit: { type: "number" } } },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "list_purchase_orders",
-      description: "List purchase orders. Filter by status. Statuses: DRAFT, PENDING_APPROVAL, APPROVED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED.",
-      parameters: {
-        type: "object",
-        properties: { status: { type: "string" }, limit: { type: "number" } },
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "list_sales",
-      description: "List recent sales transactions. Filter by approval_status (PENDING, APPROVED, REJECTED, POSTED, NOT_REQUIRED).",
-      parameters: {
-        type: "object",
-        properties: { approval_status: { type: "string" }, days: { type: "number" }, limit: { type: "number" } },
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_sales_summary",
-      description: "Sales totals over the last N days (default 7) — count, revenue, top 5 products by units sold.",
-      parameters: { type: "object", properties: { days: { type: "number" } } },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "search_products",
-      description: "Search products by SKU or name. Returns SKU, name, on-hand qty, unit_cost, reorder_point.",
-      parameters: { type: "object", properties: { q: { type: "string" }, limit: { type: "number" } }, required: ["q"] },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_fefo_health",
-      description: "Check whether the FEFO trigger and sale-return trigger are enabled in the database.",
-      parameters: { type: "object", properties: {} },
-    },
-  },
+const ALL_TOOLS = [
+  { name: "get_dashboard_kpis", description: "Top-level KPIs: products, batches, open POs, markdowns, near-expiry, today's sales total.", parameters: { type: "object", properties: {} } },
+  { name: "get_expiring_batches", description: "List inventory batches expiring within N days (default 30).", parameters: { type: "object", properties: { days: { type: "number" }, limit: { type: "number" } } } },
+  { name: "get_replenishment_suggestions", description: "Products to reorder based on stock vs reorder point and 30-day velocity.", parameters: { type: "object", properties: { limit: { type: "number" } } } },
+  { name: "list_purchase_orders", description: "List POs by status (DRAFT, PENDING_APPROVAL, APPROVED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED).", parameters: { type: "object", properties: { status: { type: "string" }, limit: { type: "number" } } } },
+  { name: "list_sales", description: "Recent sales transactions, optionally filtered by approval_status.", parameters: { type: "object", properties: { approval_status: { type: "string" }, days: { type: "number" }, limit: { type: "number" } } } },
+  { name: "get_sales_summary", description: "Sales totals over last N days (default 7) with top 5 products.", parameters: { type: "object", properties: { days: { type: "number" } } } },
+  { name: "search_products", description: "Search products by SKU or name.", parameters: { type: "object", properties: { q: { type: "string" }, limit: { type: "number" } }, required: ["q"] } },
+  { name: "get_fefo_health", description: "Check FEFO trigger health.", parameters: { type: "object", properties: {} } },
 ];
 
 async function runTool(name: string, args: any, supa: any) {
@@ -191,6 +125,24 @@ async function runTool(name: string, args: any, supa: any) {
   return { error: "unknown tool" };
 }
 
+function buildSystemPrompt(roles: Role[]) {
+  const persona = roles.includes("system_admin") ? "system administrator with full visibility"
+    : roles.includes("cfo") ? "CFO focused on financial impact, approvals and risk"
+    : roles.includes("compliance_officer") ? "compliance officer focused on FEFO, expiry, audit"
+    : roles.includes("purchasing_manager") ? "purchasing manager focused on POs, suppliers, replenishment"
+    : roles.includes("inventory_manager") ? "inventory manager focused on stock, batches, movements"
+    : "user with limited access";
+  return `You are CoreERP Copilot, an in-app assistant for an enterprise inventory & sales ERP.
+The user's persona is: ${persona}. Roles: ${roles.join(", ") || "none"}.
+
+Rules:
+- Tailor answers to the user's persona; do not surface data outside their scope.
+- Always call tools to fetch live data before answering numerical or list questions. Never invent SKUs, IDs, or counts.
+- Be concise. Use short paragraphs and bullet lists. Format money as $X.XX and dates as YYYY-MM-DD.
+- If a requested topic is outside the user's allowed tools, politely say it's outside their access.
+- You do NOT have write access. If the user asks to create/modify/approve, tell them which page to use.`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -202,37 +154,57 @@ Deno.serve(async (req) => {
     const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supa = createClient(SUPABASE_URL, SRK);
 
-    const convo: any[] = [{ role: "system", content: SYSTEM_PROMPT }, ...messages];
+    // Resolve user roles from JWT
+    const auth = req.headers.get("Authorization") ?? "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    let roles: Role[] = [];
+    if (token) {
+      const { data: u } = await supa.auth.getUser(token);
+      if (u?.user) {
+        const { data: r } = await supa.from("user_roles").select("role").eq("user_id", u.user.id);
+        roles = (r ?? []).map((x: any) => x.role as Role);
+      }
+    }
+    if (roles.length === 0) {
+      return new Response(JSON.stringify({ reply: "I can't determine your access. Please sign in again." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-    // Tool loop, max 6 hops
+    const isAdmin = roles.includes("system_admin");
+    const allowedTools = ALL_TOOLS.filter((t) => isAdmin || (TOOL_ROLES[t.name] ?? []).some((r) => roles.includes(r)))
+      .map((t) => ({ type: "function", function: t }));
+
+    const convo: any[] = [{ role: "system", content: buildSystemPrompt(roles) }, ...messages];
+
     for (let hop = 0; hop < 6; hop++) {
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "google/gemini-2.5-flash", messages: convo, tools, tool_choice: "auto" }),
+        body: JSON.stringify({ model: "google/gemini-2.5-flash", messages: convo, tools: allowedTools, tool_choice: "auto" }),
       });
       if (resp.status === 429) return new Response(JSON.stringify({ error: "Rate limited, please retry shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (resp.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Lovable workspace." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (!resp.ok) {
-        const t = await resp.text(); console.error("AI error", resp.status, t);
-        return new Response(JSON.stringify({ error: "AI gateway error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+      if (resp.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!resp.ok) { const t = await resp.text(); console.error("AI error", resp.status, t); return new Response(JSON.stringify({ error: "AI gateway error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
       const data = await resp.json();
       const msg = data?.choices?.[0]?.message;
       if (!msg) return new Response(JSON.stringify({ error: "No response" }), { status: 500, headers: corsHeaders });
-
       const toolCalls = msg.tool_calls;
       if (toolCalls && toolCalls.length) {
         convo.push(msg);
         for (const tc of toolCalls) {
-          let parsed: any = {};
-          try { parsed = JSON.parse(tc.function?.arguments ?? "{}"); } catch { /* */ }
-          const out = await runTool(tc.function.name, parsed, supa);
+          const allowed = isAdmin || (TOOL_ROLES[tc.function.name] ?? []).some((r) => roles.includes(r));
+          let out: any;
+          if (!allowed) {
+            out = { error: `Tool ${tc.function.name} not permitted for your role.` };
+          } else {
+            let parsed: any = {};
+            try { parsed = JSON.parse(tc.function?.arguments ?? "{}"); } catch { /* */ }
+            out = await runTool(tc.function.name, parsed, supa);
+          }
           convo.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(out).slice(0, 12000) });
         }
         continue;
       }
-      return new Response(JSON.stringify({ reply: msg.content ?? "" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ reply: msg.content ?? "", roles }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     return new Response(JSON.stringify({ reply: "I couldn't complete that request — too many tool steps." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {

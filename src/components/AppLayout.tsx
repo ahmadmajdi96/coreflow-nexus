@@ -18,6 +18,7 @@ const sections: NavSection[] = [
     label: "Operations",
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/daily-brief", label: "AI Daily Brief", icon: Zap },
       { to: "/products", label: "Products", icon: Package },
       { to: "/batches", label: "Batches", icon: Layers },
       { to: "/movements", label: "Stock Movements", icon: ArrowLeftRight },

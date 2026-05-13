@@ -414,6 +414,10 @@ const Sales = () => {
         }
       />
 
+      <div className="mb-5">
+        <AiInsightsPanel kind="sales_anomalies" title="AI Anomaly Watch" />
+      </div>
+
       <DataTable
         rows={recent as any[]}
         rowKey={(r: any) => r.id}

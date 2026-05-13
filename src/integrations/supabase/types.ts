@@ -17,22 +17,31 @@ export type Database = {
       ai_brief_subscriptions: {
         Row: {
           created_at: string
+          delivery_hour: number
           enabled: boolean
+          frequency: string
           id: string
+          team: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          delivery_hour?: number
           enabled?: boolean
+          frequency?: string
           id?: string
+          team?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          delivery_hour?: number
           enabled?: boolean
+          frequency?: string
           id?: string
+          team?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -53,6 +53,7 @@ const sections: NavSection[] = [
       { to: "/waste", label: "Waste & Shrinkage", icon: Trash2 },
       { to: "/compliance", label: "Compliance", icon: ShieldCheck },
       { to: "/audit", label: "Audit Log", icon: FileText },
+      { to: "/copilot-audit", label: "Copilot Feedback", icon: Activity },
     ],
   },
   {

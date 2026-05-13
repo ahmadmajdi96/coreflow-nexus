@@ -1,20 +1,23 @@
 import {
-  Factory, Activity, Wrench, Package, Zap, BarChart3,
-  Shield, ClipboardCheck, AlertTriangle, Users, FlaskConical,
-  FileCheck, Scale, Leaf, Globe, Award,
-  Tablet, CheckSquare, ThermometerSun, UserCheck, Search,
-  FileText, AlertCircle, Ship, Recycle,
-  Timer, Gauge, Settings, CalendarCheck, Layers, Database,
-  Microscope, BookOpen, FileWarning, Truck, Thermometer,
-  Building, BadgeCheck, Landmark, ScrollText, FileSpreadsheet,
+  LayoutDashboard, Package, Layers, ArrowLeftRight, MapPin,
+  Users, ShoppingCart, RefreshCw, Award, Tag,
+  ShoppingBag, Undo2, Activity, Settings2,
+  BarChart3, Calculator, Zap, Trash2, ShieldCheck, FileText,
+  Sparkles, MessageSquare, Bell, ThumbsUp,
   TrendingDown, DollarSign, Clock, Target,
 } from "lucide-react";
 import type { ElementType } from "react";
 
-import mesDashboard from "@/assets/mes-dashboard.jpg";
-import qmsDashboard from "@/assets/qms-dashboard.jpg";
-import cmsDashboard from "@/assets/cms-dashboard.jpg";
-import edgeApps from "@/assets/edge-apps.jpg";
+import screenDashboard from "@/assets/screen-dashboard.png";
+import screenBatches from "@/assets/screen-batches.png";
+import screenReplenishment from "@/assets/screen-replenishment.png";
+import screenPO from "@/assets/screen-purchase-orders.png";
+import screenSales from "@/assets/screen-sales.png";
+import screenFefo from "@/assets/screen-fefo.png";
+import screenCfo from "@/assets/screen-cfo.png";
+import screenValuation from "@/assets/screen-valuation.png";
+import screenDailyBrief from "@/assets/screen-daily-brief.png";
+import screenCopilotAudit from "@/assets/screen-copilot-audit.png";
 
 import type { ScreenPreview } from "./ScreenPreviewCard";
 export type { ScreenPreview } from "./ScreenPreviewCard";
@@ -35,157 +38,136 @@ export interface EdgeAppGroup {
 
 export const modules: ModuleData[] = [
   {
-    id: "mes", title: "MES", subtitle: "Manufacturing Execution System",
-    description: "Real-time production monitoring, OEE tracking, equipment management, and scheduling across all production lines. Provides ISA-95 Level 3 operations management with full station-level visibility — from raw material intake to finished goods packaging.",
-    image: mesDashboard, colorVar: "--mes-color",
+    id: "operations",
+    title: "Operations",
+    subtitle: "Inventory, Batches & Stock Control",
+    description:
+      "Real-time inventory across every location with full batch-level traceability and FIFO/FEFO valuation. Track every product, every batch, every movement — from goods receipt to shelf — with expiry risk and write-down exposure surfaced live.",
+    image: screenDashboard,
+    colorVar: "--mes-color",
     impact: [
-      { icon: TrendingDown, metric: "↓ 30%", label: "Downtime Reduction", description: "Predictive maintenance alerts and automated work orders catch failures before they happen, reducing unplanned stops by up to 30%." },
-      { icon: DollarSign, metric: "↓ 18%", label: "Operating Costs", description: "Energy monitoring, optimized scheduling, and reduced changeover times cut operating costs across every production line." },
-      { icon: Target, metric: "↑ 25%", label: "OEE Improvement", description: "Real-time Pareto analysis of availability, performance, and quality losses enables targeted improvement on the biggest bottlenecks." },
-      { icon: Clock, metric: "↑ 40%", label: "Faster Changeovers", description: "Digital recipe dispatch and automated parameter loading slash changeover times between production runs." },
+      { icon: TrendingDown, metric: "↓ 42%", label: "Write-offs", description: "FEFO enforcement and near-expiry alerts dramatically cut spoilage and obsolete stock write-downs." },
+      { icon: Target, metric: "100%", label: "Batch Traceability", description: "Every unit on hand is linked to a batch with received-date, expiry, supplier, and unit cost." },
+      { icon: Clock, metric: "Live", label: "Stock Visibility", description: "On-hand by SKU, batch, and location refreshed in real time as movements post." },
+      { icon: DollarSign, metric: "$48k+", label: "Live Valuation", description: "FIFO and FEFO inventory valuation recalculated on every receipt, sale and adjustment." },
     ],
     features: [
-      { icon: Activity, title: "Real-Time OEE Dashboard", desc: "Live Availability × Performance × Quality scoring with automatic Pareto analysis of the six big losses. Drill down from plant level to individual station in one click." },
-      { icon: Factory, title: "Line & Station Management", desc: "Segment production lines into stations with per-station throughput, cycle time, and yield tracking. Visual line maps show bottleneck stations in real time." },
-      { icon: Wrench, title: "Equipment Registry & PM", desc: "Complete asset registry with health scoring, preventive maintenance scheduling, spare parts inventory, and MTBF/MTTR analytics." },
-      { icon: Package, title: "Material & Recipe Management", desc: "Full lot tracking from raw material receipt to finished goods. Recipe dispatch with parameter versioning and BOM management." },
-      { icon: Zap, title: "Energy & Sustainability", desc: "Real-time kWh, water, gas, and steam consumption per line and per unit produced with anomaly alerts." },
-      { icon: BarChart3, title: "SPC & Statistical Analysis", desc: "Control charts (X̄-R, X̄-S, CUSUM), capability indices (Cp, Cpk), and automated out-of-control rule detection." },
-      { icon: Timer, title: "Production Scheduling", desc: "Drag-and-drop Gantt scheduling with constraint-based optimization, shift patterns, and conflict detection." },
-      { icon: Gauge, title: "Downtime & Loss Tracking", desc: "Categorized downtime events with automatic duration capture, reason code trees, and shift comparison." },
-      { icon: Settings, title: "CIP & Cleaning Management", desc: "Clean-in-place scheduling, cycle verification, chemical concentration tracking and validation records." },
-      { icon: CalendarCheck, title: "Shift Reports & Handover", desc: "Auto-generated end-of-shift reports with OEE, downtime, quality holds, and digital handover acknowledgement." },
-      { icon: Layers, title: "Work Order Management", desc: "Production work orders with status tracking, material allocation, and actual-vs-planned variance analysis." },
-      { icon: Database, title: "Batch Genealogy", desc: "Complete batch tree with full forward and backward traceability in seconds." },
+      { icon: LayoutDashboard, title: "Operations Dashboard", desc: "Active products, inventory batches, open POs, near-expiry counts and markdown exposure on one screen." },
+      { icon: Package, title: "Product Catalog", desc: "Multi-language SKUs, categories, perishability flags, reorder points and unit-of-measure controls." },
+      { icon: Layers, title: "Batch Registry", desc: "Batch number, received and expiry dates, qty, unit cost and live status (Active / Near-expiry / Expired)." },
+      { icon: ArrowLeftRight, title: "Stock Movements", desc: "Audited ledger of every receipt, sale, transfer, adjustment and waste event with before/after balances." },
+      { icon: MapPin, title: "Stock by Location", desc: "Per-location balances and batch breakdown across stores, warehouses and staging areas." },
     ],
-    screens: ["Production Dashboard","OEE Performance","Production Lines","Station Dashboard","Equipment Registry","Machine Detail","Work Orders","Recipe Management","Material Management","Production Scheduling","SPC Analysis","Energy Dashboard","CIP Management","Labor Management","Non-conformance","Reports Hub","Downtime Analysis","Shift Handover","Batch Genealogy","KPI Scorecard"],
+    screens: ["Dashboard", "Products", "Batches", "Stock Movements", "Stock by Location"],
     previewScreens: [
-      { id: "mes-dashboard", title: "Production Dashboard", caption: "Live OEE, throughput, and downtime across every line — drill from plant to station in one click.", image: mesDashboard, route: "/dashboard", role: "Production Manager" },
-      { id: "mes-oee", title: "OEE & Pareto Analysis", caption: "Availability × Performance × Quality with auto-Pareto of the six big losses and shift comparisons.", image: mesDashboard, route: "/dashboard", role: "Plant Manager" },
-      { id: "mes-genealogy", title: "Batch Genealogy", caption: "Forward and backward lot tracing in seconds — from raw material receipt to finished goods.", image: mesDashboard, route: "/dashboard", role: "Operator" },
+      { id: "ops-dashboard", title: "Operations Dashboard", caption: "Live KPIs across products, batches, POs, near-expiry and markdown exposure.", image: screenDashboard, route: "/", role: "Operations" },
+      { id: "ops-batches", title: "Inventory Batches", caption: "Batch-level traceability with received/expiry dates, qty, cost and FEFO status.", image: screenBatches, route: "/batches", role: "Inventory Manager" },
     ],
   },
   {
-    id: "qms", title: "QMS", subtitle: "Quality Management System",
-    description: "Comprehensive food safety and quality management with CAPA workflows, HACCP monitoring, supplier qualification, inspection management, and full BRCGS/SQF audit support. Drives continuous improvement through data-driven quality insights.",
-    image: qmsDashboard, colorVar: "--qms-color",
+    id: "procurement",
+    title: "Procurement",
+    subtitle: "Suppliers, Purchase Orders & Replenishment",
+    description:
+      "Reorder suggestions powered by sales velocity, lead time and reorder points. Route POs through configurable approval thresholds, score suppliers on OTIF and quality, and apply markdowns before perishable stock turns into waste.",
+    image: screenReplenishment,
+    colorVar: "--qms-color",
     impact: [
-      { icon: TrendingDown, metric: "↓ 65%", label: "Fewer Quality Failures", description: "Automated CCP monitoring and deviation alerts catch quality issues in real time." },
-      { icon: DollarSign, metric: "↓ 40%", label: "Waste Reduction", description: "Early defect detection and supplier qualification programs reduce scrap and rework costs." },
-      { icon: Target, metric: "↑ 90%", label: "First-Time Audit Pass", description: "Pre-assembled evidence packages with clause mapping ensure audit readiness." },
-      { icon: Clock, metric: "↓ 75%", label: "Investigation Time", description: "Structured CAPA workflows cut investigation cycle times from weeks to days." },
+      { icon: TrendingDown, metric: "↓ 60%", label: "Stock-outs", description: "Velocity-based reorder suggestions catch falling cover days before SKUs hit zero." },
+      { icon: Clock, metric: "Auto", label: "PO Approvals", description: "Multi-tier approval rules route POs by value, department and budget — no manual chasing." },
+      { icon: Award, metric: "Live", label: "Supplier Scorecards", description: "OTIF, quality acceptance rate and lead-time variance per supplier, refreshed every receipt." },
+      { icon: DollarSign, metric: "↓ 35%", label: "Markdown Loss", description: "Suggested discounts on near-expiry batches recover margin instead of writing it off." },
     ],
     features: [
-      { icon: Shield, title: "CAPA Management", desc: "Full 7-stage workflow from initiation through effectiveness verification with automated escalation." },
-      { icon: ClipboardCheck, title: "HACCP & Food Safety Plans", desc: "Digital HACCP plans with CCP monitoring, critical limit validation, and corrective action triggers." },
-      { icon: AlertTriangle, title: "Deviation & Complaint Management", desc: "Investigation workflows with severity scoring, trend analysis, and automatic CAPA generation." },
-      { icon: Users, title: "Supplier Quality Management", desc: "Supplier qualification lifecycles, risk-based audit scheduling, and performance scorecards." },
-      { icon: FlaskConical, title: "Environmental Monitoring (EMP)", desc: "Hygiene zone sampling programs with Listeria/Salmonella tracking and zone maps." },
-      { icon: Search, title: "Traceability & Mock Recall", desc: "End-to-end lot genealogy with one-click mock recall exercises and effectiveness scoring." },
-      { icon: Microscope, title: "Incoming & In-Process Inspection", desc: "Configurable inspection plans with AQL sampling and disposition workflows." },
-      { icon: BookOpen, title: "Document Control & Training", desc: "Version-controlled documents with training matrix and competency tracking." },
-      { icon: FileWarning, title: "Risk Register & FMEA", desc: "Risk registers with severity × likelihood × detectability scoring and FMEA worksheets." },
-      { icon: Thermometer, title: "Calibration Management", desc: "Instrument registry with calibration schedules and out-of-tolerance investigations." },
-      { icon: Truck, title: "Allergen Control Program", desc: "Allergen matrix, changeover validation checklists, and swab testing schedules." },
-      { icon: Building, title: "Audit Management", desc: "Internal/external audit scheduling, finding tracking, and CAPA linkage." },
+      { icon: Users, title: "Supplier Master", desc: "Lead times, payment terms, certifications, MOQs and contact tree per supplier." },
+      { icon: ShoppingCart, title: "Purchase Orders", desc: "Create POs with budget checks, route via configurable approval rules, post goods receipts directly to batches." },
+      { icon: RefreshCw, title: "Replenishment Engine", desc: "AI-assisted reorder suggestions using on-hand, reorder point, lead time and 30-day sales velocity." },
+      { icon: Award, title: "Supplier Performance", desc: "OTIF, fill rate, quality acceptance and lead-time variance scorecards." },
+      { icon: Tag, title: "Markdowns", desc: "Targeted discount campaigns on near-expiry batches with live exposure tracking." },
     ],
-    screens: ["Quality Dashboard","CAPA List & Detail","Complaint Management","HACCP Plans","Incoming Inspections","Deviation Management","Supplier Qualification","Environmental Monitoring","Allergen Control","Traceability & Recall","Audit Management","Training Records","Document Control","Calibration","Risk Register","Management Review","Reports Hub","Mock Recall","Supplier Scorecards","Non-conformance Trends"],
+    screens: ["Suppliers", "Purchase Orders", "Replenishment", "Supplier Performance", "Markdowns"],
     previewScreens: [
-      { id: "qms-dashboard", title: "Quality Dashboard", caption: "Open CAPAs, deviations, complaint trends and HACCP compliance — one glance, full drill-down.", image: qmsDashboard, route: "/dashboard", role: "QA Manager" },
-      { id: "qms-capa", title: "CAPA Workflow", caption: "7-stage corrective and preventive action lifecycle with automated escalation and effectiveness checks.", image: qmsDashboard, route: "/dashboard", role: "Compliance" },
-      { id: "qms-trace", title: "Traceability & Mock Recall", caption: "End-to-end lot genealogy with one-click mock recall exercises and effectiveness scoring.", image: qmsDashboard, route: "/dashboard", role: "QA" },
+      { id: "proc-replen", title: "Replenishment Engine", caption: "Reorder suggestions from on-hand, sales velocity, lead time and reorder point — with AI brief.", image: screenReplenishment, route: "/replenishment", role: "Purchasing Manager" },
+      { id: "proc-po", title: "Purchase Orders", caption: "Multi-tier approvals with budget checks and live MTD spend tracking.", image: screenPO, route: "/purchase-orders", role: "Purchasing Manager" },
     ],
   },
   {
-    id: "cms", title: "CMS", subtitle: "Compliance Management System",
-    description: "Regulatory intelligence, certification lifecycle management, ESG reporting, trade compliance, and audit evidence packaging — keeping your operations ahead of evolving global regulations.",
-    image: cmsDashboard, colorVar: "--cms-color",
+    id: "sales",
+    title: "Sales & POS",
+    subtitle: "Transactions, Returns & FEFO Discipline",
+    description:
+      "Point-of-sale and order capture wired directly into FEFO inventory allocation. The shortest-dated saleable batch is consumed first, returns credit back to original batches, and approval thresholds gate large transactions automatically.",
+    image: screenSales,
+    colorVar: "--cms-color",
     impact: [
-      { icon: TrendingDown, metric: "↓ 80%", label: "Compliance Risk", description: "Automated horizon scanning ensures you never miss a regulatory change that affects your products." },
-      { icon: DollarSign, metric: "↓ 50%", label: "Compliance Costs", description: "Automated evidence packaging and certification tracking eliminate manual compliance overhead." },
-      { icon: Target, metric: "100%", label: "Label Accuracy", description: "Automated artwork validation against EU 1169/2011, FDA, and local regulation databases." },
-      { icon: Clock, metric: "↓ 60%", label: "Audit Prep Time", description: "Pre-assembled evidence packages with clause-by-clause mapping for BRCGS, SQF, and FSSC 22000." },
+      { icon: Target, metric: "FEFO", label: "Auto-Allocation", description: "Database triggers enforce first-expired-first-out at sale time — no operator override required." },
+      { icon: TrendingDown, metric: "↓ 50%", label: "Expired Sales Risk", description: "Sell-by buffer blocks short-dated batches before they reach customers." },
+      { icon: Activity, metric: "Live", label: "Anomaly Watch", description: "AI flags unusual basket sizes, refund spikes and pricing outliers as transactions post." },
+      { icon: DollarSign, metric: "Auto", label: "Velocity Insights", description: "Sales velocity per SKU feeds the replenishment engine and markdown suggestions." },
     ],
     features: [
-      { icon: Scale, title: "Regulatory Intelligence & Horizon Scanning", desc: "Monitoring of regulatory changes across 50+ jurisdictions with rule-to-product impact assessment." },
-      { icon: Award, title: "Certification Lifecycle Management", desc: "Track BRCGS, SQF, FSSC 22000, ISO 22000 with renewal timelines and gap analysis." },
-      { icon: FileCheck, title: "Label & Artwork Compliance", desc: "Validation of nutrition panels, allergen declarations, and claims against global regulations." },
-      { icon: Leaf, title: "ESG & Carbon Tracking", desc: "Scope 1/2/3 emissions, product carbon footprint, water footprint, and EPR inventory." },
-      { icon: Globe, title: "Trade & Export Compliance", desc: "Sanctions screening, denied party checks, export documentation, and health certificates." },
-      { icon: ClipboardCheck, title: "Evidence Package Builder", desc: "Automated evidence collection with clause-by-clause mapping to certification standards." },
-      { icon: BadgeCheck, title: "FSMA 204 Traceability", desc: "FDA Food Traceability Rule compliance with KDE/CTE recording and 24-hour response capability." },
-      { icon: Landmark, title: "Market Registration Management", desc: "Track product registrations across markets with document and renewal dashboards." },
-      { icon: ScrollText, title: "Regulatory Change Management", desc: "Workflows for assessing, planning, and implementing regulatory changes." },
-      { icon: FileSpreadsheet, title: "Compliance Reporting & Analytics", desc: "Executive dashboards by product, market, and standard with trend analysis." },
+      { icon: ShoppingBag, title: "Sales / POS", desc: "Transaction capture with FEFO allocation, payment status, line discounts and approval gating ≥ threshold." },
+      { icon: Undo2, title: "Sales Returns", desc: "Returns credit back to original batches with reason codes and approver trail." },
+      { icon: Settings2, title: "Sales Settings", desc: "Approval thresholds, sell-by buffer days, payment methods and discount rules." },
+      { icon: Activity, title: "FEFO Validation Health", desc: "Diagnostic page that verifies the FEFO triggers are installed, enabled and firing correctly." },
+      { icon: Zap, title: "Sales Velocity", desc: "Per-SKU velocity, days-of-cover and trend windows feeding the replenishment engine." },
     ],
-    screens: ["Compliance Dashboard","Regulatory Intelligence","Horizon Scanning","Portfolio Analysis","Formulation Check","Certifications","Label Compliance","Registrations","Recall Hub","FSMA 204 Traceability","ESG Dashboard","Carbon Footprint","EPR Management","Trade Compliance","Reports","Admin","Evidence Packages","Market Registrations","Change Management","Audit Readiness"],
+    screens: ["Sales / POS", "Sales Returns", "Sales Settings", "FEFO Health", "Sales Velocity"],
     previewScreens: [
-      { id: "cms-dashboard", title: "Compliance Command Center", caption: "Live status across BRCGS, SQF, FSSC 22000, FSMA 204 and ESG with renewal countdowns.", image: cmsDashboard, route: "/dashboard", role: "Compliance Officer" },
-      { id: "cms-regintel", title: "Regulatory Intelligence", caption: "Horizon scanning across 50+ jurisdictions with rule-to-product impact assessment.", image: cmsDashboard, route: "/dashboard", role: "Regulatory" },
-      { id: "cms-evidence", title: "Evidence Package Builder", caption: "Auto-assembled audit packs with clause-by-clause mapping for BRCGS, SQF, and FSSC 22000.", image: cmsDashboard, route: "/dashboard", role: "Auditor" },
+      { id: "sales-pos", title: "Sales / POS", caption: "Transactions with FEFO allocation, AI Anomaly Watch and approval gating.", image: screenSales, route: "/sales", role: "Sales / Cashier" },
+      { id: "sales-fefo", title: "FEFO Validation Health", caption: "Confirms enforce_sale_fefo and apply_sale_return triggers are installed and firing.", image: screenFefo, route: "/fefo-health", role: "Inventory / Admin" },
+    ],
+  },
+  {
+    id: "finance",
+    title: "Finance & Compliance",
+    subtitle: "CFO View, Valuation, Waste & Audit",
+    description:
+      "Executive financial visibility on inventory exposure, markdown impact and waste — with FIFO/FEFO valuation, an immutable audit log and role-based compliance reporting that auditors actually trust.",
+    image: screenCfo,
+    colorVar: "--ai-color",
+    impact: [
+      { icon: DollarSign, metric: "Live", label: "Markdown Impact", description: "Markdowns today, MTD exposure and average discount refreshed every 15 seconds." },
+      { icon: Calculator, metric: "FIFO/FEFO", label: "Valuation", description: "Dual valuation methods on every batch — pick the costing strategy that matches your books." },
+      { icon: ShieldCheck, metric: "RBAC", label: "Role Security", description: "Roles in a separate table, security-definer functions, and policies on every drill-down." },
+      { icon: FileText, metric: "Immutable", label: "Audit Trail", description: "Every CRUD event logged with user, role, before/after, IP and timestamp." },
+    ],
+    features: [
+      { icon: BarChart3, title: "CFO Dashboard", desc: "Markdown financial impact, 6-week valuation trend, near-expiry exposure and category breakdown." },
+      { icon: Calculator, title: "Inventory Valuation", desc: "Batch-level FIFO and FEFO costing with consume-sequence preview and CSV/PDF export." },
+      { icon: Trash2, title: "Waste & Shrinkage", desc: "Waste events by reason, category and location with $ impact and trend analysis." },
+      { icon: ShieldCheck, title: "Compliance Center", desc: "Role-aware compliance evidence, retention checks and approval rule documentation." },
+      { icon: FileText, title: "Audit Log", desc: "Filterable, exportable trail of every change across the system with full diff payloads." },
+    ],
+    screens: ["CFO Dashboard", "Inventory Valuation", "Waste Report", "Compliance", "Audit Log", "Approval Rules", "Users & Roles"],
+    previewScreens: [
+      { id: "fin-cfo", title: "CFO Dashboard", caption: "Markdown impact, 6-week valuation trend and near-expiry exposure refreshed every 15s.", image: screenCfo, route: "/cfo", role: "CFO" },
+      { id: "fin-valuation", title: "Inventory Valuation", caption: "FIFO and FEFO costing per batch with consume-sequence and exportable evidence.", image: screenValuation, route: "/valuation", role: "Finance / Compliance" },
     ],
   },
 ];
 
 export const edgeAppGroups: EdgeAppGroup[] = [
   {
-    category: "MES Edge Apps", colorVar: "--mes-color",
+    category: "Embedded AI Suite",
+    colorVar: "--ai-color",
     impact: [
-      { icon: Clock, metric: "↓ 85%", label: "Data Entry Time", description: "Operators log downtime, scrap, and run status with 2-tap interactions instead of paper forms." },
-      { icon: TrendingDown, metric: "↓ 45%", label: "Response Time", description: "Real-time alerts cut response to production issues from hours to minutes." },
+      { icon: Clock, metric: "07:00", label: "Daily Brief", description: "Cron-scheduled AI Operations Brief delivered every morning to subscribed managers." },
+      { icon: Sparkles, metric: "Tool-using", label: "Copilot Agent", description: "AI Copilot with role-scoped tools — only sees data the signed-in persona is allowed to see." },
+      { icon: ThumbsUp, metric: "Audited", label: "Feedback Loop", description: "Thumbs-up / thumbs-down on every AI answer, persisted for CFO and admin review." },
+      { icon: ShieldCheck, metric: "RBAC", label: "Persona-aware", description: "Insights, drill-downs and briefs are filtered by role — Inventory, Purchasing, CFO, Compliance, Admin." },
     ],
     apps: [
-      { icon: Tablet, title: "EA1: Operator Run Status", desc: "Real-time line status with one-tap downtime logging, scrap recording, and offline sync." },
-      { icon: UserCheck, title: "EA2: Supervisor Dashboard", desc: "Multi-line overview with color-coded status, alerts, and one-tap operator communication." },
-      { icon: Wrench, title: "EA3: Maintenance Queue", desc: "Prioritized work order queue with spare parts check, time logging, and PM checklists." },
-      { icon: Package, title: "EA4: Warehouse Receiving", desc: "Inbound material receiving with barcode scanning, lot registration, and COA attachment." },
-      { icon: Zap, title: "EA5: Energy Monitoring", desc: "Real-time energy dashboards with anomaly alerts and benchmark comparisons." },
+      { icon: MessageSquare, title: "AI Copilot", desc: "In-app chat assistant with tools (FEFO health, sales lookup, PO list) gated by user role. Persists conversations and feedback." },
+      { icon: Bell, title: "AI Daily Brief", desc: "Scheduled morning summary of expiring batches, replenishment urgency and sales anomalies — filtered to your role and team." },
+      { icon: Sparkles, title: "AI Operations Brief & Anomaly Watch", desc: "On-demand insights on the Dashboard, Replenishment and Sales pages with clickable drill-downs to the underlying records." },
+      { icon: ThumbsUp, title: "Copilot Feedback Audit", desc: "Admin/CFO dashboard summarising thumbs-up/down by user, message and time range, with CSV export." },
+      { icon: FileText, title: "Compliance Exports", desc: "Export the latest AI Operations Brief to PDF or CSV for evidence packs and auditor review." },
     ],
-    screens: ["EA1: Operator Run Status","EA2: Supervisor Dashboard","EA3: Maintenance Queue","EA4: Warehouse Receiving","EA5: Energy Monitoring"],
+    screens: ["AI Copilot Widget", "AI Daily Brief", "AI Operations Brief", "AI Anomaly Watch", "Copilot Feedback Audit"],
     previewScreens: [
-      { id: "ea-operator", title: "EA1 · Operator Run Status", caption: "One-tap downtime, scrap and run-status logging — works offline and syncs when connected.", image: edgeApps, route: "/dashboard", role: "Operator" },
-      { id: "ea-supervisor", title: "EA2 · Supervisor Dashboard", caption: "Multi-line overview with color-coded alerts and one-tap operator communication.", image: edgeApps, route: "/dashboard", role: "Supervisor" },
-      { id: "ea-maint", title: "EA3 · Maintenance Queue", caption: "Prioritized work orders with spare-parts check, time logging and PM checklists.", image: edgeApps, route: "/dashboard", role: "Maintenance" },
-    ],
-  },
-  {
-    category: "QMS Edge Apps", colorVar: "--qms-color",
-    impact: [
-      { icon: TrendingDown, metric: "↓ 70%", label: "Paper-Based Errors", description: "Digital checklists with validation rules eliminate transcription errors." },
-      { icon: Clock, metric: "↓ 50%", label: "Inspection Cycle Time", description: "Pre-loaded inspection plans with one-tap pass/fail reduce inspection time by half." },
-    ],
-    apps: [
-      { icon: CheckSquare, title: "QA1: QA Technician", desc: "13-screen suite for GMP walkthroughs, CCP monitoring, EMP sampling, and batch release." },
-      { icon: UserCheck, title: "QA2: QA Manager", desc: "8-screen suite: alert inbox, allergen sign-off, NCR management, and line clearance." },
-      { icon: ThermometerSun, title: "QA3: Kiosk", desc: "Self-service stations: health declaration, PPE verification, and training library." },
-      { icon: Search, title: "QA4: Auditor", desc: "Evidence pack browser, timed mock recall, facility map, and finding capture." },
-    ],
-    screens: ["QA1: GMP Inspection","QA1: CCP Monitoring","QA1: EMP Sampling","QA1: Label Verification","QA1: Batch Release","QA2: Alert Inbox","QA2: NCR Disposition","QA2: Line Release","QA3: Health Declaration","QA3: PPE Verification","QA4: Audit Evidence","QA4: Mock Recall","QA4: Facility Map"],
-    previewScreens: [
-      { id: "qa-tech", title: "QA1 · QA Technician", caption: "GMP walkthroughs, CCP monitoring, EMP sampling and batch release in one rugged tablet suite.", image: edgeApps, route: "/dashboard", role: "QA Technician" },
-      { id: "qa-mgr", title: "QA2 · QA Manager", caption: "Alert inbox, allergen sign-off, NCR disposition and line clearance — manager-only actions.", image: edgeApps, route: "/dashboard", role: "QA Manager" },
-      { id: "qa-auditor", title: "QA4 · Auditor Kiosk", caption: "Evidence pack browser, timed mock recall, facility map and finding capture for audits.", image: edgeApps, route: "/dashboard", role: "Auditor" },
-    ],
-  },
-  {
-    category: "CMS Edge Apps", colorVar: "--cms-color",
-    impact: [
-      { icon: TrendingDown, metric: "↓ 90%", label: "Missed Deadlines", description: "Automated alerts for renewals and document expiries eliminate compliance blind spots." },
-      { icon: DollarSign, metric: "↓ 60%", label: "Recall Costs", description: "Rapid recall execution with pre-built notification templates minimize financial exposure." },
-    ],
-    apps: [
-      { icon: FileText, title: "CA1: Regulatory Affairs", desc: "9 screens: compliance command, product lookup, label approvals, FSMA 204, and weekly briefs." },
-      { icon: AlertCircle, title: "CA2: Recall War Room", desc: "7 screens: initiation, authority notifications, customer comms, cost tracking, and closeout." },
-      { icon: Ship, title: "CA3: Export Documents", desc: "4 screens: shipment doc check, expiry tracking, import requirements, and sanctions screening." },
-      { icon: Recycle, title: "CA4: Sustainability", desc: "5 screens: packaging data, carbon footprint, EPR status, permit readings, and EUDR data." },
-    ],
-    screens: ["CA1: Compliance Command","CA1: Product Lookup","CA1: Label Approval","CA1: FSMA 204","CA1: Certification Status","CA2: Recall Dashboard","CA2: Authority Notification","CA2: Customer Comms","CA2: Recall Costs","CA3: Shipment Doc Check","CA3: Document Expiry","CA3: Import Requirements","CA3: Sanctions Check","CA4: Packaging Data","CA4: Carbon Footprint","CA4: EPR Status","CA4: EUDR Data"],
-    previewScreens: [
-      { id: "ca-reg", title: "CA1 · Regulatory Affairs", caption: "Compliance command, label approvals, FSMA 204 readiness and weekly regulatory briefs.", image: edgeApps, route: "/dashboard", role: "Regulatory" },
-      { id: "ca-recall", title: "CA2 · Recall War Room", caption: "Initiation, authority notifications, customer comms, cost tracking and recall closeout.", image: edgeApps, route: "/dashboard", role: "Recall Lead" },
-      { id: "ca-sustain", title: "CA4 · Sustainability", caption: "Packaging data, carbon footprint, EPR status, permit readings and EUDR data capture.", image: edgeApps, route: "/dashboard", role: "ESG" },
+      { id: "ai-brief", title: "AI Daily Brief", caption: "Subscriptions, frequency, delivery hour and team — daily AI brief delivered automatically.", image: screenDailyBrief, route: "/daily-brief", role: "Manager" },
+      { id: "ai-audit", title: "Copilot Feedback Audit", caption: "Thumbs up/down summary by user, message and time range — CFO/admin only.", image: screenCopilotAudit, route: "/copilot-audit", role: "CFO / Admin" },
     ],
   },
 ];
-
-export { edgeApps };

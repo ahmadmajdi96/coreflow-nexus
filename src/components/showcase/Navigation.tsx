@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { Factory, Shield, FileCheck, Tablet, Sparkles, Workflow, Award, Menu, X } from "lucide-react";
+import { Boxes, ShoppingCart, ShoppingBag, BarChart3, Sparkles, Workflow, Award, Menu, X } from "lucide-react";
 import cortaLogo from "@/assets/corta-logo.png";
 
 const navItems = [
   { label: "Architecture", href: "#architecture", icon: Workflow },
-  { label: "MES", href: "#mes", icon: Factory },
-  { label: "QMS", href: "#qms", icon: Shield },
-  { label: "CMS", href: "#cms", icon: FileCheck },
-  { label: "Edge Apps", href: "#edge", icon: Tablet },
-  { label: "AI", href: "#ai", icon: Sparkles },
+  { label: "Operations", href: "#operations", icon: Boxes },
+  { label: "Procurement", href: "#procurement", icon: ShoppingCart },
+  { label: "Sales", href: "#sales", icon: ShoppingBag },
+  { label: "Finance", href: "#finance", icon: BarChart3 },
+  { label: "AI Suite", href: "#edge", icon: Sparkles },
   { label: "Standards", href: "#standards", icon: Award },
 ];
 
@@ -42,8 +42,8 @@ const Navigation = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <a href="#" className="flex items-center gap-2 sm:gap-3 hover-scale">
-          <img src={cortaLogo} alt="CORTA-PL" className="h-7 sm:h-8 w-auto" />
-          <span className="font-bold text-base sm:text-lg tracking-tight">CORTA-PL</span>
+          <img src={cortaLogo} alt="CORTA ERP" className="h-7 sm:h-8 w-auto" />
+          <span className="font-bold text-base sm:text-lg tracking-tight">CORTA ERP</span>
         </a>
 
         <div className="hidden lg:flex items-center gap-1">

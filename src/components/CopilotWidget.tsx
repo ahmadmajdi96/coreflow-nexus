@@ -71,7 +71,7 @@ const CopilotWidget = () => {
             <div className="flex items-center gap-2 text-white">
               <Sparkles className="h-4 w-4" />
               <div>
-                <div className="font-semibold text-sm">CoreERP Copilot</div>
+                <div className="font-semibold text-sm">CORTA ERP Copilot</div>
                 <div className="text-[10px] opacity-80">AI assistant · live data</div>
               </div>
             </div>

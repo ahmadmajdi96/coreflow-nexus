@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface Msg { role: "user" | "assistant"; content: string }
 
 const SUGGESTIONS = [
-  "Explain CORTA-PL in one paragraph for a CFO",
+  "Explain CORTA ERP in one paragraph for a CFO",
   "Write a LinkedIn post about our MES module",
   "Draft an executive summary for a BRCGS audit",
   "Compare MES vs QMS in 3 bullet points",
@@ -28,7 +28,7 @@ const AiAssistant = () => {
     try {
       const { data, error } = await supabase.functions.invoke("generate-description", {
         body: {
-          moduleTitle: "CORTA-PL Production Suite",
+          moduleTitle: "CORTA ERP Production Suite",
           currentDescription: text,
           mode: "enhance",
         },
@@ -57,7 +57,7 @@ const AiAssistant = () => {
           >
             <Sparkles className="w-3.5 h-3.5" /> AI Copilot
           </div>
-          <h2 className="section-title mb-4">Ask the CORTA-PL AI</h2>
+          <h2 className="section-title mb-4">Ask the CORTA ERP AI</h2>
           <p className="section-subtitle mx-auto">
             Generate executive summaries, marketing copy, audit briefs or rewrite product
             descriptions on demand — every answer auditable.
@@ -137,7 +137,7 @@ const AiAssistant = () => {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything about CORTA-PL…"
+              placeholder="Ask anything about CORTA ERP…"
               rows={2}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {

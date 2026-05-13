@@ -90,7 +90,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             <Boxes className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="font-bold tracking-tight text-sidebar-foreground">CoreERP</div>
+            <div className="font-bold tracking-tight text-sidebar-foreground">CORTA ERP</div>
             <div className="text-[10px] text-sidebar-muted uppercase tracking-wider font-medium">Enterprise · v1.0</div>
           </div>
         </div>

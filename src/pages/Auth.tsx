@@ -45,7 +45,7 @@ const Auth = () => {
         <div className="flex items-center gap-3">
           <div className="h-11 w-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center"><Boxes className="h-6 w-6" /></div>
           <div>
-            <div className="text-xl font-bold">CoreERP</div>
+            <div className="text-xl font-bold">CORTA ERP</div>
             <div className="text-xs text-white/70">Enterprise Resource Planning</div>
           </div>
         </div>
@@ -58,7 +58,7 @@ const Auth = () => {
             <div className="space-y-2"><ShieldCheck className="h-5 w-5" /><div className="text-sm font-medium">Role-based access</div></div>
           </div>
         </div>
-        <div className="text-xs text-white/60">© 2026 CoreERP · Compliance-ready</div>
+        <div className="text-xs text-white/60">© 2026 CORTA ERP · Compliance-ready</div>
       </div>
 
       <div className="flex items-center justify-center p-6">
@@ -67,10 +67,10 @@ const Auth = () => {
             <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white" style={{ background: "var(--gradient-primary)" }}>
               <Boxes className="h-5 w-5" />
             </div>
-            <div><h1 className="text-lg font-bold">CoreERP</h1></div>
+            <div><h1 className="text-lg font-bold">CORTA ERP</h1></div>
           </div>
           <h2 className="text-2xl font-bold mb-1">Welcome back</h2>
-          <p className="text-sm text-muted-foreground mb-6">Sign in to your CoreERP workspace.</p>
+          <p className="text-sm text-muted-foreground mb-6">Sign in to your CORTA ERP workspace.</p>
           <Tabs defaultValue="signin">
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="signin">Sign in</TabsTrigger>

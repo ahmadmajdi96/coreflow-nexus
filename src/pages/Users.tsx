@@ -35,7 +35,7 @@ const Users = () => {
 
   return (
     <>
-      <PageHeader title="Users & Roles" description="Manage who can do what across CoreERP." />
+      <PageHeader title="Users & Roles" description="Manage who can do what across CORTA ERP." />
       {!isAdmin && <Card className="p-4 mb-4 border-warning"><p className="text-sm">Only System Administrators can change roles.</p></Card>}
       <DataTable
         rows={users}

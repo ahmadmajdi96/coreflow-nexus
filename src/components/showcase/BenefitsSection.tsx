@@ -23,7 +23,7 @@ const BenefitsSection = () => (
     <div className="relative max-w-7xl mx-auto">
       <div className="text-center mb-16">
         <h2 className="section-title mb-4">
-          Why <span className="pp-gradient-text">CORTA-PL</span>?
+          Why <span className="pp-gradient-text">CORTA ERP</span>?
         </h2>
         <p className="section-subtitle mx-auto">
           Measurable impact on your line KPIs, your audit posture and your compliance

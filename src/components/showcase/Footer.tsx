@@ -8,8 +8,8 @@ const Footer = () => (
   >
     <div className="max-w-6xl mx-auto text-center">
       <div className="flex items-center justify-center gap-3 mb-6">
-        <img src={cortaLogo} alt="CORTA-PL Logo" className="h-10 w-auto" loading="lazy" />
-        <span className="font-bold text-2xl tracking-tight">CORTA-PL</span>
+        <img src={cortaLogo} alt="CORTA ERP Logo" className="h-10 w-auto" loading="lazy" />
+        <span className="font-bold text-2xl tracking-tight">CORTA ERP</span>
       </div>
       <p className="pp-muted-text max-w-lg mx-auto mb-8">
         AI-powered manufacturing intelligence for the modern food production facility —
@@ -47,7 +47,7 @@ const Footer = () => (
       </a>
 
       <div className="mt-8 text-xs pp-muted-text/60">
-        © 2026 CORTA-PL Production Suite. All rights reserved.
+        © 2026 CORTA ERP Production Suite. All rights reserved.
       </div>
     </div>
   </footer>

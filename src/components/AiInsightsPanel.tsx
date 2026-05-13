@@ -5,6 +5,8 @@ import { Sparkles, Loader2, RefreshCw, Lightbulb, ArrowRight, ExternalLink, Pack
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { canSeeLink, filterInsights } from "@/lib/aiAccess";
 
 interface DrillLink { type: string; id: string; label: string; href: string }
 interface InsightData { headline: string; insights: string[]; actions: string[]; links?: DrillLink[] }
@@ -12,6 +14,7 @@ interface InsightData { headline: string; insights: string[]; actions: string[];
 const ICONS: Record<string, any> = { batch: Layers, po: ShoppingCart, product: Package, sale: Receipt, return: Undo2 };
 
 const AiInsightsPanel = ({ kind, title }: { kind: "dashboard" | "replenishment" | "sales_anomalies"; title?: string }) => {
+  const { roles } = useAuth();
   const [data, setData] = useState<InsightData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -53,32 +56,38 @@ const AiInsightsPanel = ({ kind, title }: { kind: "dashboard" | "replenishment" 
       {data && (
         <div className="space-y-4 relative">
           {data.headline && <div className="text-sm font-medium leading-relaxed">{data.headline}</div>}
-          {data.insights?.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground flex items-center gap-1.5"><Lightbulb className="h-3 w-3" /> Insights</div>
-              <ul className="space-y-1.5">
-                {data.insights.map((i, idx) => (
-                  <li key={idx} className="text-sm flex gap-2"><span className="text-primary mt-1">•</span><span>{i}</span></li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {data.links && data.links.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-border">
-              <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground flex items-center gap-1.5"><ExternalLink className="h-3 w-3" /> Drill down</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-                {data.links.map((l, idx) => {
-                  const Icon = ICONS[l.type] ?? ExternalLink;
-                  return (
-                    <Link key={idx} to={l.href} className="flex items-center gap-2 text-xs p-2 rounded-md border border-border bg-secondary/30 hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                      <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
-                      <span className="truncate">{l.label}</span>
-                    </Link>
-                  );
-                })}
+          {data.insights?.length > 0 && (() => {
+            const visible = filterInsights(data.insights, roles);
+            return visible.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground flex items-center gap-1.5"><Lightbulb className="h-3 w-3" /> Insights</div>
+                <ul className="space-y-1.5">
+                  {visible.map((i, idx) => (
+                    <li key={idx} className="text-sm flex gap-2"><span className="text-primary mt-1">•</span><span>{i}</span></li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          )}
+            ) : null;
+          })()}
+          {data.links && data.links.length > 0 && (() => {
+            const visible = data.links.filter((l) => canSeeLink(l.type, roles));
+            return visible.length > 0 ? (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground flex items-center gap-1.5"><ExternalLink className="h-3 w-3" /> Drill down</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                  {visible.map((l, idx) => {
+                    const Icon = ICONS[l.type] ?? ExternalLink;
+                    return (
+                      <Link key={idx} to={l.href} className="flex items-center gap-2 text-xs p-2 rounded-md border border-border bg-secondary/30 hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                        <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span className="truncate">{l.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null;
+          })()}
           {data.actions?.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-border">
               <div className="text-xs uppercase tracking-wider font-semibold text-muted-foreground flex items-center gap-1.5"><ArrowRight className="h-3 w-3" /> Recommended actions</div>

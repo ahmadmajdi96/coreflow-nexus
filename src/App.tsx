@@ -31,6 +31,7 @@ import SaleDetail from "./pages/SaleDetail";
 import FefoHealth from "./pages/FefoHealth";
 import Showcase from "./pages/Showcase";
 import DailyBrief from "./pages/DailyBrief";
+import CopilotAudit from "./pages/CopilotAudit";
 import NotFound from "./pages/NotFound";
 import RoleGuard from "@/components/RoleGuard";
 
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/sales/:id" element={<Wrap><RoleGuard allowed={["inventory_manager","purchasing_manager","cfo","system_admin"]}><SaleDetail /></RoleGuard></Wrap>} />
             <Route path="/fefo-health" element={<Wrap><RoleGuard allowed={["cfo","system_admin"]}><FefoHealth /></RoleGuard></Wrap>} />
             <Route path="/daily-brief" element={<Wrap><DailyBrief /></Wrap>} />
+            <Route path="/copilot-audit" element={<Wrap><RoleGuard allowed={["cfo","compliance_officer"]}><CopilotAudit /></RoleGuard></Wrap>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

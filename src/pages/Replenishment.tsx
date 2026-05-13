@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, FileText, RefreshCw, AlertTriangle, TrendingUp } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/lib/exporters";
+import AiInsightsPanel from "@/components/AiInsightsPanel";
 
 type Status = "all" | "out_of_stock" | "below_reorder" | "reorder_soon" | "healthy";
 

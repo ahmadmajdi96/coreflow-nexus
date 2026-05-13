@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThumbsUp, ThumbsDown, Download } from "lucide-react";
 import { format } from "date-fns";
-import { toCsv, downloadCsv } from "@/lib/exporters";
+import { exportToCSV } from "@/lib/exporters";
 
 interface Row { id: string; user_id: string; rating: number; question: string | null; answer: string | null; created_at: string }
 
@@ -30,7 +30,7 @@ const CopilotAudit = () => {
     const { data } = await q;
     const list = (data as any) ?? [];
     setRows(list);
-    const ids = Array.from(new Set(list.map((r: Row) => r.user_id)));
+    const ids = Array.from(new Set(list.map((r: Row) => r.user_id))) as string[];
     if (ids.length) {
       const { data: profs } = await supabase.from("profiles").select("id,email,full_name").in("id", ids);
       const m: Record<string, string> = {};
@@ -62,12 +62,17 @@ const CopilotAudit = () => {
   }, [filtered, profiles]);
 
   const exportCsv = () => {
-    const data = filtered.map((r) => ({
-      timestamp: r.created_at, user: profiles[r.user_id] || r.user_id,
-      rating: r.rating === 1 ? "thumbs_up" : "thumbs_down",
-      question: r.question || "", answer: r.answer || "",
-    }));
-    downloadCsv("copilot-feedback", toCsv(data));
+    exportToCSV(
+      `copilot-feedback-${range}.csv`,
+      ["Timestamp", "User", "Rating", "Question", "Answer"],
+      filtered.map((r) => [
+        r.created_at,
+        profiles[r.user_id] || r.user_id,
+        r.rating === 1 ? "thumbs_up" : "thumbs_down",
+        r.question || "",
+        r.answer || "",
+      ]),
+    );
   };
 
   return (

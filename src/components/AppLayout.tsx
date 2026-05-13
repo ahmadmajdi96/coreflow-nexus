@@ -8,6 +8,7 @@ import {
   ArrowLeftRight, RefreshCw, MapPin, Zap, Trash2, Award, ShoppingBag, Undo2, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CopilotWidget from "@/components/CopilotWidget";
 
 type NavItem = { to: string; label: string; icon: any; adminOnly?: boolean };
 type NavSection = { label: string; items: NavItem[] };

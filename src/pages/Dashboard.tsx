@@ -68,6 +68,10 @@ const Dashboard = () => {
         ))}
       </div>
 
+      <div className="mt-6">
+        <AiInsightsPanel kind="dashboard" title="AI Operations Brief" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
         <Card className="p-6 lg:col-span-2">
           <h3 className="font-semibold mb-1 flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Recent activity</h3>

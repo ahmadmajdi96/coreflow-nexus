@@ -53,13 +53,25 @@ const AiDescription = ({ mod }: { mod: ModuleData }) => {
           <Sparkles className="w-3 h-3" /> AI
         </div>
         {MODES.map((m) => (
-          <Button key={m.key} size="sm" variant="outline" disabled={loading !== null} onClick={() => run(m.key)} className="h-7 text-xs">
+          <Button
+            key={m.key}
+            size="sm"
+            variant="outline"
+            disabled={loading !== null}
+            onClick={() => run(m.key)}
+            className="h-7 text-xs gap-1.5 bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white hover:border-white/30"
+          >
             {loading === m.key ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
             {m.label}
           </Button>
         ))}
         {text !== original && (
-          <Button size="sm" variant="ghost" onClick={() => setText(original)} className="h-7 text-xs">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setText(original)}
+            className="h-7 text-xs gap-1.5 text-white/80 hover:bg-white/10 hover:text-white"
+          >
             <RotateCcw className="w-3 h-3" /> Reset
           </Button>
         )}

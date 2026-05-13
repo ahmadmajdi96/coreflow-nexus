@@ -34,7 +34,7 @@ export const exportToPDF = ({ title, subtitle, filename, headers, rows, meta }: 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("CoreERP", 32, 28);
+  doc.text("CORTA ERP", 32, 28);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(title, 32, 46);

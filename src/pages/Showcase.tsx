@@ -10,7 +10,7 @@ import Footer from "@/components/showcase/Footer";
 
 const Showcase = () => {
   useEffect(() => {
-    document.title = "CORTA-PL — AI-Powered Production Suite";
+    document.title = "CORTA ERP — AI-Powered Production Suite";
   }, []);
   return (
     <div className="pp-dark min-h-screen text-foreground">

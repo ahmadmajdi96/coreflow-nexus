@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* CoreERP Design System — Modern Enterprise (Indigo/Violet/Emerald). All colors HSL. */
+/* CORTA ERP Design System — Modern Enterprise (Indigo/Violet/Emerald). All colors HSL. */
 
 @layer base {
   :root {
@@ -176,7 +176,7 @@
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
 }
 
-/* CORTA-PL Showcase — dark themed scope (mirrors Pixel Pulse / Lovable Ledger pattern) */
+/* CORTA ERP Showcase — dark themed scope (mirrors Pixel Pulse / Lovable Ledger pattern) */
 .pp-dark {
   --pp-bg: 220 25% 7%;
   --pp-fg: 210 20% 92%;

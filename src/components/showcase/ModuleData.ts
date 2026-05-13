@@ -59,6 +59,11 @@ export const modules: ModuleData[] = [
       { icon: Database, title: "Batch Genealogy", desc: "Complete batch tree with full forward and backward traceability in seconds." },
     ],
     screens: ["Production Dashboard","OEE Performance","Production Lines","Station Dashboard","Equipment Registry","Machine Detail","Work Orders","Recipe Management","Material Management","Production Scheduling","SPC Analysis","Energy Dashboard","CIP Management","Labor Management","Non-conformance","Reports Hub","Downtime Analysis","Shift Handover","Batch Genealogy","KPI Scorecard"],
+    previewScreens: [
+      { id: "mes-dashboard", title: "Production Dashboard", caption: "Live OEE, throughput, and downtime across every line — drill from plant to station in one click.", image: mesDashboard, route: "/dashboard", role: "Production Manager" },
+      { id: "mes-oee", title: "OEE & Pareto Analysis", caption: "Availability × Performance × Quality with auto-Pareto of the six big losses and shift comparisons.", image: mesDashboard, route: "/dashboard", role: "Plant Manager" },
+      { id: "mes-genealogy", title: "Batch Genealogy", caption: "Forward and backward lot tracing in seconds — from raw material receipt to finished goods.", image: mesDashboard, route: "/dashboard", role: "Operator" },
+    ],
   },
   {
     id: "qms", title: "QMS", subtitle: "Quality Management System",
@@ -85,6 +90,11 @@ export const modules: ModuleData[] = [
       { icon: Building, title: "Audit Management", desc: "Internal/external audit scheduling, finding tracking, and CAPA linkage." },
     ],
     screens: ["Quality Dashboard","CAPA List & Detail","Complaint Management","HACCP Plans","Incoming Inspections","Deviation Management","Supplier Qualification","Environmental Monitoring","Allergen Control","Traceability & Recall","Audit Management","Training Records","Document Control","Calibration","Risk Register","Management Review","Reports Hub","Mock Recall","Supplier Scorecards","Non-conformance Trends"],
+    previewScreens: [
+      { id: "qms-dashboard", title: "Quality Dashboard", caption: "Open CAPAs, deviations, complaint trends and HACCP compliance — one glance, full drill-down.", image: qmsDashboard, route: "/dashboard", role: "QA Manager" },
+      { id: "qms-capa", title: "CAPA Workflow", caption: "7-stage corrective and preventive action lifecycle with automated escalation and effectiveness checks.", image: qmsDashboard, route: "/dashboard", role: "Compliance" },
+      { id: "qms-trace", title: "Traceability & Mock Recall", caption: "End-to-end lot genealogy with one-click mock recall exercises and effectiveness scoring.", image: qmsDashboard, route: "/dashboard", role: "QA" },
+    ],
   },
   {
     id: "cms", title: "CMS", subtitle: "Compliance Management System",
@@ -109,6 +119,11 @@ export const modules: ModuleData[] = [
       { icon: FileSpreadsheet, title: "Compliance Reporting & Analytics", desc: "Executive dashboards by product, market, and standard with trend analysis." },
     ],
     screens: ["Compliance Dashboard","Regulatory Intelligence","Horizon Scanning","Portfolio Analysis","Formulation Check","Certifications","Label Compliance","Registrations","Recall Hub","FSMA 204 Traceability","ESG Dashboard","Carbon Footprint","EPR Management","Trade Compliance","Reports","Admin","Evidence Packages","Market Registrations","Change Management","Audit Readiness"],
+    previewScreens: [
+      { id: "cms-dashboard", title: "Compliance Command Center", caption: "Live status across BRCGS, SQF, FSSC 22000, FSMA 204 and ESG with renewal countdowns.", image: cmsDashboard, route: "/dashboard", role: "Compliance Officer" },
+      { id: "cms-regintel", title: "Regulatory Intelligence", caption: "Horizon scanning across 50+ jurisdictions with rule-to-product impact assessment.", image: cmsDashboard, route: "/dashboard", role: "Regulatory" },
+      { id: "cms-evidence", title: "Evidence Package Builder", caption: "Auto-assembled audit packs with clause-by-clause mapping for BRCGS, SQF, and FSSC 22000.", image: cmsDashboard, route: "/dashboard", role: "Auditor" },
+    ],
   },
 ];
 
@@ -127,6 +142,11 @@ export const edgeAppGroups: EdgeAppGroup[] = [
       { icon: Zap, title: "EA5: Energy Monitoring", desc: "Real-time energy dashboards with anomaly alerts and benchmark comparisons." },
     ],
     screens: ["EA1: Operator Run Status","EA2: Supervisor Dashboard","EA3: Maintenance Queue","EA4: Warehouse Receiving","EA5: Energy Monitoring"],
+    previewScreens: [
+      { id: "ea-operator", title: "EA1 · Operator Run Status", caption: "One-tap downtime, scrap and run-status logging — works offline and syncs when connected.", image: edgeApps, route: "/dashboard", role: "Operator" },
+      { id: "ea-supervisor", title: "EA2 · Supervisor Dashboard", caption: "Multi-line overview with color-coded alerts and one-tap operator communication.", image: edgeApps, route: "/dashboard", role: "Supervisor" },
+      { id: "ea-maint", title: "EA3 · Maintenance Queue", caption: "Prioritized work orders with spare-parts check, time logging and PM checklists.", image: edgeApps, route: "/dashboard", role: "Maintenance" },
+    ],
   },
   {
     category: "QMS Edge Apps", colorVar: "--qms-color",
@@ -141,6 +161,11 @@ export const edgeAppGroups: EdgeAppGroup[] = [
       { icon: Search, title: "QA4: Auditor", desc: "Evidence pack browser, timed mock recall, facility map, and finding capture." },
     ],
     screens: ["QA1: GMP Inspection","QA1: CCP Monitoring","QA1: EMP Sampling","QA1: Label Verification","QA1: Batch Release","QA2: Alert Inbox","QA2: NCR Disposition","QA2: Line Release","QA3: Health Declaration","QA3: PPE Verification","QA4: Audit Evidence","QA4: Mock Recall","QA4: Facility Map"],
+    previewScreens: [
+      { id: "qa-tech", title: "QA1 · QA Technician", caption: "GMP walkthroughs, CCP monitoring, EMP sampling and batch release in one rugged tablet suite.", image: edgeApps, route: "/dashboard", role: "QA Technician" },
+      { id: "qa-mgr", title: "QA2 · QA Manager", caption: "Alert inbox, allergen sign-off, NCR disposition and line clearance — manager-only actions.", image: edgeApps, route: "/dashboard", role: "QA Manager" },
+      { id: "qa-auditor", title: "QA4 · Auditor Kiosk", caption: "Evidence pack browser, timed mock recall, facility map and finding capture for audits.", image: edgeApps, route: "/dashboard", role: "Auditor" },
+    ],
   },
   {
     category: "CMS Edge Apps", colorVar: "--cms-color",
@@ -155,6 +180,11 @@ export const edgeAppGroups: EdgeAppGroup[] = [
       { icon: Recycle, title: "CA4: Sustainability", desc: "5 screens: packaging data, carbon footprint, EPR status, permit readings, and EUDR data." },
     ],
     screens: ["CA1: Compliance Command","CA1: Product Lookup","CA1: Label Approval","CA1: FSMA 204","CA1: Certification Status","CA2: Recall Dashboard","CA2: Authority Notification","CA2: Customer Comms","CA2: Recall Costs","CA3: Shipment Doc Check","CA3: Document Expiry","CA3: Import Requirements","CA3: Sanctions Check","CA4: Packaging Data","CA4: Carbon Footprint","CA4: EPR Status","CA4: EUDR Data"],
+    previewScreens: [
+      { id: "ca-reg", title: "CA1 · Regulatory Affairs", caption: "Compliance command, label approvals, FSMA 204 readiness and weekly regulatory briefs.", image: edgeApps, route: "/dashboard", role: "Regulatory" },
+      { id: "ca-recall", title: "CA2 · Recall War Room", caption: "Initiation, authority notifications, customer comms, cost tracking and recall closeout.", image: edgeApps, route: "/dashboard", role: "Recall Lead" },
+      { id: "ca-sustain", title: "CA4 · Sustainability", caption: "Packaging data, carbon footprint, EPR status, permit readings and EUDR data capture.", image: edgeApps, route: "/dashboard", role: "ESG" },
+    ],
   },
 ];
 

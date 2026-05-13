@@ -16,10 +16,22 @@ import qmsDashboard from "@/assets/qms-dashboard.jpg";
 import cmsDashboard from "@/assets/cms-dashboard.jpg";
 import edgeApps from "@/assets/edge-apps.jpg";
 
+import type { ScreenPreview } from "./ScreenPreviewCard";
+export type { ScreenPreview } from "./ScreenPreviewCard";
+
 export interface ModuleFeature { icon: ElementType; title: string; desc: string; }
 export interface ImpactMetric { icon: ElementType; metric: string; label: string; description: string; }
-export interface ModuleData { id: string; title: string; subtitle: string; description: string; image: string; colorVar: string; features: ModuleFeature[]; screens: string[]; impact: ImpactMetric[]; }
-export interface EdgeAppGroup { category: string; colorVar: string; apps: ModuleFeature[]; screens: string[]; impact: ImpactMetric[]; }
+export interface ModuleData {
+  id: string; title: string; subtitle: string; description: string;
+  image: string; colorVar: string;
+  features: ModuleFeature[]; screens: string[]; impact: ImpactMetric[];
+  previewScreens: ScreenPreview[];
+}
+export interface EdgeAppGroup {
+  category: string; colorVar: string;
+  apps: ModuleFeature[]; screens: string[]; impact: ImpactMetric[];
+  previewScreens: ScreenPreview[];
+}
 
 export const modules: ModuleData[] = [
   {

@@ -1,4 +1,4 @@
-import { modules, edgeAppGroups, edgeApps } from "./ModuleData";
+import { modules, edgeAppGroups } from "./ModuleData";
 import ImpactCard from "./ImpactCard";
 import AiDescription from "./AiDescription";
 import { ScreenPreviewGrid } from "./ScreenPreviewCard";
@@ -118,24 +118,11 @@ const ModuleShowcase = () => (
 
       <div id="edge" className="scroll-mt-20 mt-32">
         <div className="text-center mb-16">
-          <h2 className="section-title mb-4">Edge Application Suite</h2>
+          <h2 className="section-title mb-4">Embedded AI Suite</h2>
           <p className="section-subtitle mx-auto">
-            Purpose-built workspaces for operators, technicians, QA managers, recall
-            leads and auditors — rugged-tablet ready, role-locked and offline-first.
+            A persona-aware copilot, scheduled daily briefs, anomaly watch and
+            audited feedback — woven directly into every CORTA ERP workflow.
           </p>
-        </div>
-
-        <div className="mb-12">
-          <div className="module-card overflow-hidden max-w-4xl mx-auto">
-            <div className="p-1">
-              <img
-                src={edgeApps}
-                alt="Edge apps across factory roles"
-                className="w-full rounded-lg"
-                loading="lazy"
-              />
-            </div>
-          </div>
         </div>
 
         <div className="space-y-16">

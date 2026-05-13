@@ -6,10 +6,10 @@ const HeroSection = () => (
     <div className="absolute inset-0">
       <img
         src={heroFactory}
-        alt="Modern food manufacturing facility"
+        alt="CORTA ERP intelligent inventory operations"
         className="w-full h-full object-cover"
         width={1920}
-        height={800}
+        height={1024}
       />
       <div
         className="absolute inset-0"
@@ -30,28 +30,28 @@ const HeroSection = () => (
       >
         <span className="pp-pulse-dot" />
         <span className="text-xs sm:text-sm font-medium pp-muted-text">
-          AI-Powered Manufacturing Intelligence Platform
+          AI-Powered Inventory & Operations Intelligence
         </span>
       </div>
 
       <div className="flex justify-center mb-4 sm:mb-6">
         <img
           src={cortaLogo}
-          alt="CORTA-PL Logo"
+          alt="CORTA ERP Logo"
           className="h-16 sm:h-20 md:h-24 w-auto animate-fade-in"
         />
       </div>
 
       <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6">
-        <span className="pp-gradient-text">CORTA-PL</span>
+        <span className="pp-gradient-text">CORTA ERP</span>
         <br />
-        <span>Produce smarter. Comply faster.</span>
+        <span>Stock smarter. Sell faster.</span>
       </h1>
 
       <p className="text-lg sm:text-xl md:text-2xl pp-muted-text max-w-3xl mx-auto mb-8 sm:mb-12 leading-relaxed px-2">
-        A unified production engine — MES, QMS and CMS plus an embedded AI Suite —
-        purpose-built for food manufacturers who run lean, audit-ready operations from
-        the control room to the factory floor.
+        A unified ERP — Operations, Procurement, Sales and Finance — with an
+        embedded AI Suite that watches your batches, replenishment and sales in
+        real time and briefs the right people at the right moment.
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
@@ -66,10 +66,10 @@ const HeroSection = () => (
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-4xl mx-auto">
         {[
-          { value: "3", label: "Core Platforms" },
-          { value: "13+", label: "Edge Applications" },
-          { value: "100+", label: "Workflow Screens" },
-          { value: "ISA-95", label: "Compliant" },
+          { value: "4", label: "Core Modules" },
+          { value: "AI", label: "Copilot + Daily Brief" },
+          { value: "25+", label: "Workflow Screens" },
+          { value: "RBAC", label: "Role-Secured" },
         ].map((stat) => (
           <div
             key={stat.label}

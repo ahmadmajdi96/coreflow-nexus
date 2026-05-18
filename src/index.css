@@ -270,3 +270,27 @@
 .pp-dark .section-subtitle { font-size: 1.075rem; color: hsl(var(--pp-muted)); max-width: 48rem; }
 .pp-dark .hover-scale { transition: transform 0.2s ease; }
 .pp-dark .hover-scale:hover { transform: scale(1.04); }
+
+/* High-contrast accessibility mode (WCAG AA) */
+.pp-high-contrast .pp-dark,
+.pp-high-contrast.pp-dark {
+  --pp-fg: 0 0% 100%;
+  --pp-muted: 0 0% 88%;
+  --pp-border: 0 0% 70%;
+}
+.pp-high-contrast .pp-dark .pp-muted-text { color: hsl(0 0% 92%); }
+.pp-high-contrast .pp-dark .pp-border,
+.pp-high-contrast .pp-dark [class*="border"] { border-color: hsl(0 0% 75%) !important; }
+.pp-high-contrast .pp-dark button,
+.pp-high-contrast .pp-dark a { outline-offset: 2px; }
+.pp-high-contrast .pp-dark button:focus-visible,
+.pp-high-contrast .pp-dark a:focus-visible {
+  outline: 3px solid #fde047;
+  outline-offset: 2px;
+}
+.pp-high-contrast .pp-dark .data-card,
+.pp-high-contrast .pp-dark .module-card,
+.pp-high-contrast .pp-dark .benefit-card,
+.pp-high-contrast .pp-dark .pp-card {
+  border-color: hsl(0 0% 75%);
+}

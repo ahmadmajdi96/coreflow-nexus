@@ -1,24 +1,25 @@
 import {
-  Factory, Shield, FileCheck, Tablet, ArrowRight, ArrowDown,
-  Database, Cpu, Brain, Sparkles, Layers, BarChart3, ClipboardCheck,
+  Boxes, ShoppingCart, ShoppingBag, BarChart3, ArrowDown, ArrowRight,
+  Database, Brain, Sparkles, Layers, ShieldCheck, FileText,
 } from "lucide-react";
 
-const sourceSystems = [
-  { name: "PLC / SCADA", desc: "Real-time line, sensor & equipment telemetry", icon: Cpu, colorVar: "--mes-color" },
-  { name: "Lab & EMP", desc: "Quality results, environmental monitoring, CCPs", icon: Shield, colorVar: "--qms-color" },
-  { name: "ERP & Master Data", desc: "Recipes, BOMs, suppliers, certifications", icon: Database, colorVar: "--cms-color" },
+const dataInputs = [
+  { name: "Goods Receipts", desc: "Batch intake from purchase orders — qty, expiry, supplier, unit cost.", icon: Boxes, colorVar: "--mes-color" },
+  { name: "Sales / POS", desc: "Transactions auto-allocated FEFO with sell-by buffer and approval gates.", icon: ShoppingBag, colorVar: "--cms-color" },
+  { name: "Product & Supplier Master", desc: "SKUs, reorder points, lead times, payment terms and certifications.", icon: Database, colorVar: "--qms-color" },
 ];
 
-const corePlatforms = [
-  { name: "MES", icon: Factory, colorVar: "--mes-color" },
-  { name: "QMS", icon: Shield, colorVar: "--qms-color" },
-  { name: "CMS", icon: FileCheck, colorVar: "--cms-color" },
+const coreModules = [
+  { name: "Operations", icon: Boxes, colorVar: "--mes-color" },
+  { name: "Procurement", icon: ShoppingCart, colorVar: "--qms-color" },
+  { name: "Sales & POS", icon: ShoppingBag, colorVar: "--cms-color" },
+  { name: "Finance & Compliance", icon: BarChart3, colorVar: "--ai-color" },
 ];
 
 const reportingOutputs = [
-  { name: "OEE / SPC / Pareto", icon: BarChart3 },
-  { name: "Audit & Evidence Packages", icon: ClipboardCheck },
-  { name: "AI Insights & Persona Apps", icon: Brain },
+  { name: "CFO Dashboard & Valuation", icon: BarChart3 },
+  { name: "Immutable Audit Log", icon: FileText },
+  { name: "AI Insights & Daily Brief", icon: Brain },
 ];
 
 const Pill = ({ label, colorVar = "--pp-border" }: { label: string; colorVar?: string }) => (
@@ -34,11 +35,11 @@ const Pill = ({ label, colorVar = "--pp-border" }: { label: string; colorVar?: s
   </div>
 );
 
-const FlowArrow = () => (
+const FlowArrow = ({ label }: { label: string }) => (
   <div className="flex justify-center my-4">
     <div className="flex flex-col items-center gap-1 pp-muted-text">
       <ArrowDown className="w-5 h-5 opacity-60" />
-      <span className="text-[10px] uppercase tracking-widest opacity-70">Real-time event stream</span>
+      <span className="text-[10px] uppercase tracking-widest opacity-70">{label}</span>
     </div>
   </div>
 );
@@ -49,20 +50,20 @@ const SystemArchitecture = () => (
       <div className="text-center mb-14">
         <h2 className="section-title mb-4">System Architecture</h2>
         <p className="section-subtitle mx-auto">
-          A unified production backbone fed by PLC, lab and ERP signals — every event
-          posts once into the right module, drives real-time KPIs, and surfaces in
-          AI-powered persona apps for the floor and the control room.
+          One database, four tightly-integrated modules, and an embedded AI Suite.
+          Every receipt, sale and adjustment posts once into a shared inventory model,
+          enforces FEFO at the trigger level, and lands in role-scoped dashboards.
         </p>
       </div>
 
-      {/* Layer 1: Source systems */}
+      {/* Layer 1: Inputs */}
       <div className="flex items-center gap-3 mb-4">
         <div className="h-px flex-1 bg-border" />
-        <Pill label="Source Systems → Edge Gateway" colorVar="--mes-color" />
+        <Pill label="Inputs — Receipts · Sales · Master Data" colorVar="--mes-color" />
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        {sourceSystems.map((s) => (
+        {dataInputs.map((s) => (
           <div key={s.name} className="data-card flex items-start gap-4">
             <div
               className="p-3 rounded-lg shrink-0"
@@ -81,12 +82,12 @@ const SystemArchitecture = () => (
         ))}
       </div>
 
-      <FlowArrow />
+      <FlowArrow label="Posts into unified inventory model" />
 
-      {/* Layer 2: Core Platforms (MES + QMS + CMS) */}
+      {/* Layer 2: Core modules */}
       <div className="flex items-center gap-3 mb-4">
         <div className="h-px flex-1 bg-border" />
-        <Pill label="Core Platforms — MES · QMS · CMS" colorVar="--mes-color" />
+        <Pill label="Core Modules" colorVar="--mes-color" />
         <div className="h-px flex-1 bg-border" />
       </div>
 
@@ -98,8 +99,8 @@ const SystemArchitecture = () => (
           boxShadow: "0 0 32px hsl(var(--mes-color) / 0.08)",
         }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-          {corePlatforms.map((p) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          {coreModules.map((p) => (
             <div
               key={p.name}
               className="flex items-center justify-center gap-2 p-4 rounded-lg border pp-border"
@@ -134,14 +135,15 @@ const SystemArchitecture = () => (
           </div>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h3 className="font-semibold text-foreground">Unified Production Backbone</h3>
+              <h3 className="font-semibold text-foreground">Unified Inventory Backbone</h3>
               <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border pp-border pp-muted-text">
-                ISA-95 Level 3
+                FIFO / FEFO enforced in-DB
               </span>
             </div>
             <p className="text-sm pp-muted-text">
-              Every batch, deviation and certification event flows through a single
-              data model — from raw material intake to finished goods release.
+              Database triggers enforce first-expired-first-out at sale time. Every
+              stock movement writes an audited ledger row with before/after balances —
+              from goods receipt through markdown to sale or waste.
             </p>
           </div>
           <div className="hidden sm:flex items-center gap-1 pp-muted-text">
@@ -151,7 +153,7 @@ const SystemArchitecture = () => (
         </div>
       </div>
 
-      <FlowArrow />
+      <FlowArrow label="Surfaced through role-scoped outputs" />
 
       {/* Layer 3: Reporting & Intelligence */}
       <div className="flex items-center gap-3 mb-4">
@@ -176,31 +178,13 @@ const SystemArchitecture = () => (
         ))}
       </div>
 
-      {/* Edge overlay strip */}
+      {/* AI & Security strip */}
       <div className="flex items-center gap-3 mb-4">
         <div className="h-px flex-1 bg-border" />
-        <Pill label="Edge Layer — Floor Apps" colorVar="--edge-color" />
+        <Pill label="Embedded AI & Access Control" colorVar="--edge-color" />
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        <div className="data-card flex items-start gap-4">
-          <div
-            className="p-3 rounded-lg shrink-0"
-            style={{
-              background: "hsl(var(--edge-color) / 0.1)",
-              border: "1px solid hsl(var(--edge-color) / 0.25)",
-            }}
-          >
-            <Tablet className="w-6 h-6" style={{ color: "hsl(var(--edge-color))" }} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground mb-1">Rugged Tablet & Kiosk Apps</h3>
-            <p className="text-sm pp-muted-text">
-              Operators, technicians, QA and maintenance crews work offline-first with
-              two-tap downtime, scrap, CCP and inspection logging.
-            </p>
-          </div>
-        </div>
         <div className="data-card flex items-start gap-4">
           <div
             className="p-3 rounded-lg shrink-0"
@@ -214,8 +198,28 @@ const SystemArchitecture = () => (
           <div>
             <h3 className="font-semibold text-foreground mb-1">AI Suite</h3>
             <p className="text-sm pp-muted-text">
-              CORTA Copilot drafts shift reports, CAPA narratives and audit packs;
-              persona insights surface anomalies in real time with drill-down.
+              Copilot chat, AI Operations Brief, Anomaly Watch and the scheduled
+              Daily Brief — each scoped to what the signed-in role is allowed to see,
+              with thumbs-up/down feedback persisted for audit.
+            </p>
+          </div>
+        </div>
+        <div className="data-card flex items-start gap-4">
+          <div
+            className="p-3 rounded-lg shrink-0"
+            style={{
+              background: "hsl(var(--edge-color) / 0.1)",
+              border: "1px solid hsl(var(--edge-color) / 0.25)",
+            }}
+          >
+            <ShieldCheck className="w-6 h-6" style={{ color: "hsl(var(--edge-color))" }} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground mb-1">Role-Based Access Control</h3>
+            <p className="text-sm pp-muted-text">
+              Roles live in a dedicated table with security-definer policies on every
+              drill-down — Inventory, Purchasing, CFO, Compliance and Admin each see
+              exactly the data their persona owns.
             </p>
           </div>
         </div>
@@ -223,7 +227,7 @@ const SystemArchitecture = () => (
 
       <div className="mt-8 flex items-center justify-center gap-2 pp-muted-text text-xs">
         <Layers className="w-3.5 h-3.5" />
-        <span>Every layer reconciled · Every event auditable · Every role appropriately scoped</span>
+        <span>One ledger · Every event auditable · Every role appropriately scoped</span>
         <ArrowRight className="w-3.5 h-3.5" />
       </div>
     </div>

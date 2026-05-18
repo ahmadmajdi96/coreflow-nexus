@@ -1,14 +1,10 @@
-const standards = [
-  { name: "ISA-95", desc: "Enterprise-Control Integration" },
-  { name: "BRCGS v9", desc: "Global Food Safety Standard" },
-  { name: "SQF", desc: "Safe Quality Food Certification" },
-  { name: "FSSC 22000", desc: "Food Safety System Certification" },
-  { name: "HACCP", desc: "Hazard Analysis & Critical Control" },
-  { name: "FSMA 204", desc: "FDA Traceability Rule" },
-  { name: "EU 1169/2011", desc: "Food Information Regulation" },
-  { name: "GMP", desc: "Good Manufacturing Practices" },
-  { name: "MESA-11", desc: "MES Functional Model" },
-  { name: "ISO 22000", desc: "Food Safety Management" },
+const capabilities = [
+  { name: "RBAC", desc: "Role-based access control" },
+  { name: "Audit Log", desc: "Immutable change history" },
+  { name: "FIFO / FEFO", desc: "Dual inventory costing" },
+  { name: "Approval Rules", desc: "Multi-tier PO gates" },
+  { name: "Row-Level Security", desc: "Policy-scoped drill-downs" },
+  { name: "CSV / PDF Export", desc: "Evidence-ready outputs" },
 ];
 
 const IndustryStandards = () => (
@@ -18,20 +14,20 @@ const IndustryStandards = () => (
   >
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-12">
-        <h2 className="section-title mb-4">Industry Standards Compliance</h2>
+        <h2 className="section-title mb-4">Built-in Compliance Capabilities</h2>
         <p className="section-subtitle mx-auto">
-          Built to meet and exceed the requirements of global food safety, quality
-          and manufacturing standards.
+          Controls, ledgers and exports that live inside the system — not bolt-ons.
+          Everything below is enforced in the database or the UI, not promised on a slide.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
-        {standards.map((std) => (
-          <div key={std.name} className="data-card text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        {capabilities.map((c) => (
+          <div key={c.name} className="data-card text-center">
             <div className="font-mono font-bold pp-gradient-text text-lg mb-1">
-              {std.name}
+              {c.name}
             </div>
-            <div className="text-xs pp-muted-text">{std.desc}</div>
+            <div className="text-xs pp-muted-text">{c.desc}</div>
           </div>
         ))}
       </div>

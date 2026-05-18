@@ -9,9 +9,9 @@ interface Msg { role: "user" | "assistant"; content: string }
 
 const SUGGESTIONS = [
   "Explain CORTA ERP in one paragraph for a CFO",
-  "Write a LinkedIn post about our MES module",
-  "Draft an executive summary for a BRCGS audit",
-  "Compare MES vs QMS in 3 bullet points",
+  "Summarize how FEFO allocation works in Sales",
+  "Draft a 3-bullet brief on near-expiry exposure",
+  "Compare FIFO vs FEFO valuation in plain English",
 ];
 
 const AiAssistant = () => {

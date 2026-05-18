@@ -12,17 +12,17 @@ const Footer = () => (
         <span className="font-bold text-2xl tracking-tight">CORTA ERP</span>
       </div>
       <p className="pp-muted-text max-w-lg mx-auto mb-8">
-        AI-powered manufacturing intelligence for the modern food production facility —
-        every batch monitored, every metric measured, every audit pack ready.
+        AI-powered inventory and operations intelligence — every batch monitored,
+        every sale FEFO-allocated, every audit trail ready.
       </p>
       <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 text-sm pp-muted-text mb-10">
-        <span>MES</span>
+        <span>Operations</span>
         <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>QMS</span>
+        <span>Procurement</span>
         <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>CMS</span>
+        <span>Sales &amp; POS</span>
         <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>Edge Apps</span>
+        <span>Finance &amp; Compliance</span>
         <span className="w-1 h-1 rounded-full bg-white/20" />
         <span>AI Copilot</span>
       </div>

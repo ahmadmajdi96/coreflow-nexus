@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.ai-daily-brief]
 verify_jwt = false
+
+[functions.showcase-chat]
+verify_jwt = false

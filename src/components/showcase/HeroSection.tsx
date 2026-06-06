@@ -1,11 +1,8 @@
-import { useEffect, useState } from "react";
 import heroFactory from "@/assets/hero-factory.jpg";
 import cortaLogo from "@/assets/corta-logo.png";
 import screenDashboard from "@/assets/screen-dashboard.png";
 import screenCfo from "@/assets/screen-cfo.png";
 import screenSales from "@/assets/screen-sales.png";
-import screenReplenishment from "@/assets/screen-replenishment.png";
-import screenBatches from "@/assets/screen-batches.png";
 import { useShowcaseSettings, type HeroPreset } from "./ShowcaseSettings";
 
 const HERO_MAP: Record<HeroPreset, string> = {
@@ -15,23 +12,10 @@ const HERO_MAP: Record<HeroPreset, string> = {
   sales: screenSales,
 };
 
-const PREVIEWS = [
-  { src: screenDashboard, label: "Operations" },
-  { src: screenReplenishment, label: "Replenishment" },
-  { src: screenSales, label: "Sales" },
-  { src: screenCfo, label: "CFO" },
-  { src: screenBatches, label: "Batches" },
-];
-
 const HeroSection = () => {
   const { settings } = useShowcaseSettings();
   const heroSrc = HERO_MAP[settings.hero] ?? heroFactory;
-  const [idx, setIdx] = useState(0);
 
-  useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % PREVIEWS.length), 4000);
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">

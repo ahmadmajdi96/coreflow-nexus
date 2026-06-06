@@ -7,7 +7,8 @@ import AiAssistant from "@/components/showcase/AiAssistant";
 import BenefitsSection from "@/components/showcase/BenefitsSection";
 import IndustryStandards from "@/components/showcase/IndustryStandards";
 import Footer from "@/components/showcase/Footer";
-import { ShowcaseSettingsProvider, ShowcaseSettingsPanel } from "@/components/showcase/ShowcaseSettings";
+import { ShowcaseSettingsProvider } from "@/components/showcase/ShowcaseSettings";
+import ShowcaseChat from "@/components/showcase/ShowcaseChat";
 
 const Showcase = () => {
   useEffect(() => {
@@ -28,7 +29,7 @@ const Showcase = () => {
         <BenefitsSection />
         <IndustryStandards />
         <Footer />
-        <ShowcaseSettingsPanel />
+        <ShowcaseChat />
       </div>
     </ShowcaseSettingsProvider>
   );

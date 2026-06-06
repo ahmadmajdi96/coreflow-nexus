@@ -1,11 +1,8 @@
-import { useEffect, useState } from "react";
 import heroFactory from "@/assets/hero-factory.jpg";
 import cortaLogo from "@/assets/corta-logo.png";
 import screenDashboard from "@/assets/screen-dashboard.png";
 import screenCfo from "@/assets/screen-cfo.png";
 import screenSales from "@/assets/screen-sales.png";
-import screenReplenishment from "@/assets/screen-replenishment.png";
-import screenBatches from "@/assets/screen-batches.png";
 import { useShowcaseSettings, type HeroPreset } from "./ShowcaseSettings";
 
 const HERO_MAP: Record<HeroPreset, string> = {
@@ -15,23 +12,10 @@ const HERO_MAP: Record<HeroPreset, string> = {
   sales: screenSales,
 };
 
-const PREVIEWS = [
-  { src: screenDashboard, label: "Operations" },
-  { src: screenReplenishment, label: "Replenishment" },
-  { src: screenSales, label: "Sales" },
-  { src: screenCfo, label: "CFO" },
-  { src: screenBatches, label: "Batches" },
-];
-
 const HeroSection = () => {
   const { settings } = useShowcaseSettings();
   const heroSrc = HERO_MAP[settings.hero] ?? heroFactory;
-  const [idx, setIdx] = useState(0);
 
-  useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % PREVIEWS.length), 4000);
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -82,46 +66,6 @@ const HeroSection = () => {
           that watches your batches, replenishment and sales in real time.
         </p>
 
-        {/* Real cropped system screenshot strip */}
-        <div className="mb-10 max-w-5xl mx-auto">
-          <div
-            className="relative rounded-xl overflow-hidden border pp-border shadow-2xl"
-            style={{ background: "hsl(220 22% 11%)" }}
-          >
-            <div className="flex items-center gap-1.5 px-3 py-2 border-b pp-border bg-black/40">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/80" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-400/80" />
-              <span className="ml-3 text-[11px] pp-muted-text font-mono">corta.app / {PREVIEWS[idx].label.toLowerCase()}</span>
-            </div>
-            <div className="aspect-[16/9] relative">
-              {PREVIEWS.map((p, i) => (
-                <img
-                  key={p.label}
-                  src={p.src}
-                  alt={`${p.label} screen`}
-                  className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-700 ${
-                    i === idx ? "opacity-100" : "opacity-0"
-                  }`}
-                  loading={i === 0 ? "eager" : "lazy"}
-                  decoding="async"
-                />
-              ))}
-            </div>
-          </div>
-          <div className="flex justify-center gap-2 mt-3">
-            {PREVIEWS.map((p, i) => (
-              <button
-                key={p.label}
-                onClick={() => setIdx(i)}
-                aria-label={`Show ${p.label}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === idx ? "w-8 bg-white" : "w-3 bg-white/30 hover:bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-4xl mx-auto">
           {[
